@@ -1,0 +1,2052 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+</head>
+<body>
+<title>Quimivet PCP</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: barra lateral fixa de navegação + área de trabalho; telas operacionais densas, tipo quadro de PCP */
+:root{
+  --bg:#F3F5F1; --surface:#FFFFFF; --surface-2:#ECEFE9; --fg:#18201B; --muted:#5A645D; --line:#D7DCD3;
+  --accent:#1D6A50; --accent-fg:#FFFFFF; --accent-soft:#DAEBE2;
+  --warn:#9A6300; --warn-soft:#F5E7C8; --crit:#B3261E; --crit-soft:#F7DCD9; --info:#2D5B88; --info-soft:#DCE6F1;
+  --shadow:0 8px 30px rgba(20,30,25,.14);
+  --f-display:"Archivo","Segoe UI",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111513; --surface:#191E1B; --surface-2:#212723; --fg:#E4E9E5; --muted:#99A39C; --line:#2E3631;
+  --accent:#55B48E; --accent-fg:#0C1510; --accent-soft:#1B3328;
+  --warn:#E3AE47; --warn-soft:#3A2E13; --crit:#F2756B; --crit-soft:#3E1D1A; --info:#82B3E4; --info-soft:#1A2A3B;
+  --shadow:0 8px 30px rgba(0,0,0,.5); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111513; --surface:#191E1B; --surface-2:#212723; --fg:#E4E9E5; --muted:#99A39C; --line:#2E3631;
+  --accent:#55B48E; --accent-fg:#0C1510; --accent-soft:#1B3328;
+  --warn:#E3AE47; --warn-soft:#3A2E13; --crit:#F2756B; --crit-soft:#3E1D1A; --info:#82B3E4; --info-soft:#1A2A3B;
+  --shadow:0 8px 30px rgba(0,0,0,.5); color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.45;margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:1.5rem;font-weight:700} h2{font-size:1.1rem;font-weight:600} h3{font-size:.95rem;font-weight:600}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+.eyebrow{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.app{display:grid;grid-template-columns:220px minmax(0,1fr);min-height:100%}
+.app>*{min-width:0}
+.side{background:var(--surface);border-right:1px solid var(--line);padding:20px 12px;display:flex;flex-direction:column;gap:18px;position:sticky;top:0;height:100vh}
+.brand{padding:0 8px}
+.brand b{font-family:var(--f-display);font-size:1.15rem;display:block}
+.brand span{font-size:12px;color:var(--muted)}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;color:var(--fg);text-decoration:none;font-weight:500}
+.nav a:hover{background:var(--surface-2)}
+.nav a.on{background:var(--accent-soft);color:var(--accent)}
+.nav svg{width:18px;height:18px;flex:none}
+.side-foot{margin-top:auto;display:flex;flex-direction:column;gap:8px;padding:0 8px;font-size:12px}
+.mode{display:inline-flex;gap:6px;align-items:center}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--warn)}
+.dot.ok{background:var(--accent)}
+main{min-width:0;padding-block:24px 48px;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px))}
+.page-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:20px}
+.page-head p{margin:4px 0 0;color:var(--muted);max-width:65ch}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--surface);padding:8px 14px;min-height:40px;border-radius:8px;cursor:pointer;font-weight:600;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn.pri:hover{filter:brightness(1.07)}
+.btn.danger{color:var(--crit);border-color:color-mix(in srgb,var(--crit) 40%,var(--line))}
+.btn.sm{padding:5px 11px;min-height:32px;font-size:13.5px}
+.btn.lg{font-size:16.5px;padding:12px 22px;min-height:52px;border-radius:10px}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+body.readonly .edit-only{display:none!important}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px}
+.panel-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.panel-b{padding:16px}
+.grid{display:grid;gap:16px}
+.grid>*{min-width:0}
+.g-kpi{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.g-2{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)}
+@media (max-width:1100px){.g-2{grid-template-columns:minmax(0,1fr)}}
+.g-2w{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+@media (max-width:1500px){.g-2w{grid-template-columns:minmax(0,1fr)}}
+.kpi{padding:14px 16px}
+.kpi .v{font-family:var(--f-display);font-size:1.7rem;font-weight:700;font-variant-numeric:tabular-nums;margin-top:4px}
+.kpi .v small{font-size:.9rem;font-weight:500;color:var(--muted)}
+.kpi .s{font-size:12px;color:var(--muted)}
+
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right}
+td.r{white-space:nowrap}
+tr.click{cursor:pointer}
+tr.click:hover td{background:var(--surface-2)}
+
+.pill{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;background:var(--surface-2);color:var(--muted)}
+.pill.ok{background:var(--accent-soft);color:var(--accent)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.crit{background:var(--crit-soft);color:var(--crit)}
+.pill.info{background:var(--info-soft);color:var(--info)}
+.lote{font-family:var(--f-mono);font-weight:600;background:var(--surface-2);border:1px solid var(--line);border-radius:4px;padding:0 6px;font-size:12.5px;white-space:nowrap}
+.lote.none{color:var(--muted);font-weight:400;border-style:dashed}
+
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.tab{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 12px;cursor:pointer;font-size:13px}
+.tab.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+
+/* folha de planejamento */
+.sheet{display:grid;gap:16px}
+.sheet>*{min-width:0}
+.prod-card .panel-h h2 .code{font-family:var(--f-mono);color:var(--muted);font-weight:500;margin-right:6px}
+.metrics{display:flex;gap:18px;flex-wrap:wrap}
+.metric{display:flex;flex-direction:column}
+.metric b{font-family:var(--f-mono);font-size:15px}
+.metric span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.metric.crit b{color:var(--crit)} .metric.ok b{color:var(--accent)}
+.lots-row{display:flex;gap:8px;flex-wrap:wrap;padding:10px 16px;border-top:1px solid var(--line);background:var(--surface-2);border-radius:0 0 8px 8px;align-items:center}
+.lotchip{display:inline-flex;gap:6px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:3px 8px;font-size:12.5px;cursor:pointer}
+.lotchip:hover{border-color:var(--muted)}
+
+.ledger{font-family:var(--f-mono);font-size:13px;background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:12px 14px;display:grid;gap:3px;font-variant-numeric:tabular-nums}
+.ledger .l{display:grid;grid-template-columns:90px 1fr;gap:10px}
+.ledger .l .q{text-align:right}
+.ledger .tot{border-top:1px dashed var(--muted);margin-top:4px;padding-top:6px;font-weight:600}
+.ledger .tot.ok{color:var(--accent)} .ledger .tot.crit{color:var(--crit)}
+
+/* calendário */
+.cal-head{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;margin-bottom:1px}
+.cal-head div{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;padding:6px 8px}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.day{background:var(--surface);min-height:118px;padding:6px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.day.out{background:var(--surface-2)}
+.day.out .dn{opacity:.5}
+.day.today .dn{background:var(--accent);color:var(--accent-fg);border-radius:4px;padding:0 5px}
+.day.over{outline:2px dashed var(--accent);outline-offset:-3px}
+.day .dh{display:flex;justify-content:space-between;align-items:center}
+.dn{font-family:var(--f-mono);font-size:12px;font-weight:600}
+.day .add{opacity:0;border:0;background:none;cursor:pointer;color:var(--muted);font-size:16px;line-height:1;padding:0 4px}
+.day:hover .add{opacity:1}
+.dkg{font-size:11px;color:var(--muted);font-family:var(--f-mono)}
+.chip{border-radius:5px;padding:4px 6px;font-size:12px;cursor:pointer;border-left:3px solid var(--muted);background:var(--surface-2);min-width:0}
+.chip .t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip .c{color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip.planejada{border-left-color:var(--info);background:var(--info-soft)}
+.chip.liberada{border-left-color:var(--warn);background:var(--warn-soft)}
+.chip.produzida{border-left-color:var(--accent);background:var(--accent-soft)}
+.chip[draggable="true"]{cursor:grab}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+
+/* formulários e modal */
+.overlay{position:fixed;inset:0;background:rgba(10,15,12,.45);display:flex;align-items:flex-start;justify-content:center;padding:5vh 16px;z-index:50;overflow-y:auto}
+.modal{background:var(--surface);border-radius:10px;box-shadow:var(--shadow);width:min(760px,100%);border:1px solid var(--line)}
+.modal.wide{width:min(980px,100%)}
+.modal-h{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line)}
+.modal-b{padding:18px 20px;display:grid;gap:16px}
+.modal-f{display:flex;justify-content:flex-end;gap:8px;padding:14px 20px;border-top:1px solid var(--line);flex-wrap:wrap}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:var(--muted)}
+label.f.span2{grid-column:span 2}
+@media (max-width:560px){label.f.span2{grid-column:auto}}
+input,select,textarea{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 9px;font-weight:400;color:var(--fg);min-width:0}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
+input[type=number]{font-family:var(--f-mono)}
+.err{color:var(--crit);font-size:13px;font-weight:500}
+.note{background:var(--surface-2);border-radius:6px;padding:10px 12px;font-size:13px;color:var(--muted)}
+.note.warn{background:var(--warn-soft);color:var(--warn)}
+.confirm-box{border:1px solid var(--warn);background:var(--warn-soft);border-radius:8px;padding:12px 14px;display:grid;gap:10px}
+.hist{display:grid;gap:4px;font-size:12.5px}
+.hist div{display:grid;grid-template-columns:130px 1fr;gap:8px}
+.empty{padding:28px 16px;text-align:center;color:var(--muted)}
+.toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));right:max(20px,env(safe-area-inset-right,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:8px;z-index:80;box-shadow:var(--shadow);font-weight:500}
+.chart text{fill:var(--muted);font-size:11px;font-family:var(--f-mono)}
+.chart .bar{fill:var(--accent)}
+.chart .bar.today{fill:var(--warn)}
+.chart .grid{stroke:var(--line)}
+
+.login{min-height:100%;display:grid;place-items:center;padding:24px}
+.login .panel{width:min(380px,100%)}
+
+.banner{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border-radius:8px;padding:10px 14px;margin-bottom:16px;border:1px solid}
+.banner.crit{background:var(--crit-soft);color:var(--crit);border-color:color-mix(in srgb,var(--crit) 35%,transparent)}
+.banner.warn{background:var(--warn-soft);color:var(--warn);border-color:color-mix(in srgb,var(--warn) 35%,transparent)}
+.banner .btn{color:var(--fg)}
+.badge{margin-left:auto;background:var(--crit);color:#fff;border-radius:999px;font-size:11px;font-weight:700;padding:0 7px;line-height:18px;font-family:var(--f-mono)}
+.badge.warn{background:var(--warn)}
+.drop{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;color:var(--muted);cursor:pointer;display:grid;gap:6px;place-items:center}
+.drop.over,.drop:hover{border-color:var(--accent);color:var(--fg);background:var(--accent-soft)}
+.imp{border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:grid;gap:8px}
+.imp.bad{border-color:color-mix(in srgb,var(--crit) 45%,var(--line))}
+.imp.ok{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+.bar-mini{height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden;width:70px;flex:none}
+.bar-mini i{display:block;height:100%;background:var(--accent)}
+.bar-mini.repor i{background:var(--warn)} .bar-mini.crit i{background:var(--crit)}
+pre.raw{max-height:220px;overflow:auto;background:var(--surface-2);padding:10px;border-radius:6px;font-size:11.5px;white-space:pre;margin:8px 0 0}
+body.simples .adv{display:none!important}
+body.noped .ped-edit{display:none!important}
+body.simples .page-head p{display:none}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-bottom:28px}
+.tile{display:flex;flex-direction:column;gap:10px;align-items:flex-start;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;cursor:pointer;min-height:156px;text-decoration:none;color:var(--fg);font:inherit}
+.tile:hover{border-color:var(--accent);box-shadow:var(--shadow)}
+.tile .ic{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.tile .ic svg{width:26px;height:26px}
+.tile b{font-family:var(--f-display);font-size:1.2rem;font-weight:700}
+.tile .cnt{margin-top:auto;font-size:14px;font-weight:600;color:var(--muted)}
+.tile.alert .ic{background:var(--crit-soft);color:var(--crit)} .tile.alert .cnt{color:var(--crit)}
+.tile.warn .ic{background:var(--warn-soft);color:var(--warn)} .tile.warn .cnt{color:var(--warn)}
+.jobs{display:grid;gap:12px}
+.job{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+.job.late{border-color:color-mix(in srgb,var(--crit) 45%,var(--line))}
+.job h3{font-size:1.3rem;font-family:var(--f-display)}
+.job .who{color:var(--muted);margin-top:2px}
+.lotebig{font-family:var(--f-mono);font-size:1.5rem;font-weight:700;border:2px solid var(--fg);border-radius:8px;padding:2px 12px;letter-spacing:.02em}
+.steps{display:flex;gap:6px;font-size:12px;color:var(--muted);margin-top:6px;flex-wrap:wrap}
+.steps span{padding:2px 8px;border-radius:999px;background:var(--surface-2)}
+.steps span.on{background:var(--accent);color:var(--accent-fg)}
+.steps span.done{background:var(--accent-soft);color:var(--accent)}
+.nav-more summary{list-style:none;cursor:pointer;padding:8px 10px;border-radius:6px;color:var(--muted);font-weight:500;font-size:14px}
+.nav-more summary::-webkit-details-marker{display:none}
+.nav-more summary:hover{background:var(--surface-2)}
+.nav-more[open] summary{color:var(--fg)}
+.nav-more .nav{margin-top:2px}
+.bigin{font-size:30px!important;padding:12px 14px!important;width:100%;font-family:var(--f-mono)}
+.chk{display:flex;gap:8px;align-items:center;font-size:13px;cursor:pointer}
+.chk input{width:18px;height:18px}
+@media (max-width:820px){
+  .app{grid-template-columns:1fr}
+  .side{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));gap:10px}
+  .nav{flex-direction:row;overflow-x:auto;width:100%}
+  .nav a{white-space:nowrap}
+  .side-foot{margin:0;flex-direction:row;flex-wrap:wrap}
+  main{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .day{min-height:80px}
+  .chip .c{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div id="root"></div>
+
+<script>
+/* =====================================================================
+   QUIMIVET PCP — Fase 1
+   Para usar com Firebase, cole aqui a configuração do seu projeto
+   (Firebase Console → Configurações do projeto → Seus apps → Config).
+   Enquanto ficar null, o sistema roda em MODO DEMONSTRAÇÃO e guarda
+   os dados apenas neste navegador.
+   ===================================================================== */
+const FIREBASE_CONFIG = const FIREBASE_CONFIG = {
+  apiKey: "AIzaSy...",
+  authDomain: "quimivet-pcp.firebaseapp.com",
+  projectId: "quimivet-pcp",
+  storageBucket: "quimivet-pcp.firebasestorage.app",
+  messagingSenderId: "1234567890",
+  appId: "1:1234567890:web:abc123"
+};
+/* Exemplo:
+const FIREBASE_CONFIG = {
+  apiKey: "...", authDomain: "seu-projeto.firebaseapp.com",
+  projectId: "seu-projeto", storageBucket: "seu-projeto.appspot.com",
+  messagingSenderId: "...", appId: "..."
+};
+*/
+
+/* E-mail automático (opcional) pelo EmailJS — passo a passo no LEIA-ME.
+   Enquanto ficar null, os avisos aparecem só dentro do sistema. */
+const EMAILJS_CONFIG = null;
+/* Exemplo: const EMAILJS_CONFIG = { publicKey: "...", serviceId: "service_...", templateId: "template_..." }; */
+
+const CAPACIDADE = 500;            // kg máximos por batida
+const LS_KEY = 'quimivet-pcp-v4';
+const FB_VER = '10.12.2';
+
+let S = {produtos:{}, materias:{}, pedidos:{}, batidas:{}, movimentos:{}, compras:{}, config:{proximoLote:1}};
+let MODE = FIREBASE_CONFIG ? 'fb' : 'local';
+let PERFIL = 'producao';
+let USER = null, fs = null, auth = null;
+let VIEW = 'painel';
+let CAL = null;
+let PED_FILTRO = 'aberto';
+let CAD_TAB = 'produtos';
+let READY = false;
+let SIMPLES = true; try { SIMPLES = localStorage.getItem('qpcp-detalhes') !== '1'; } catch(e){}
+const VIEWS = ['inicio','painel','analise','pedidos','planejamento','calendario','lotes','estoque','compras','cadastros'];
+const viewPadrao = () => PERFIL==='diretor' ? 'painel' : PERFIL==='adm' ? 'pedidos' : 'inicio';
+
+/* ---------- utilidades ---------- */
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-5);
+const isoDate = d => { const z = new Date(d.getTime() - d.getTimezoneOffset()*60000); return z.toISOString().slice(0,10); };
+const hoje = () => isoDate(new Date());
+const addDias = (iso, n) => { const d = new Date(iso+'T12:00:00'); d.setDate(d.getDate()+n); return isoDate(d); };
+const fd = iso => iso ? iso.split('-').reverse().join('/') : '—';
+const nf = n => Number(n||0).toLocaleString('pt-BR', {maximumFractionDigits:1});
+const agora = () => new Date().toISOString();
+const quem = () => USER ? (USER.email || 'usuário') : (PERFIL==='diretor' ? 'Diretor' : 'Produção');
+const diasEntre = (a, b) => Math.round((new Date(b+'T12:00:00') - new Date(a+'T12:00:00'))/86400000);
+const clone = o => JSON.parse(JSON.stringify(o));
+const canEdit = () => PERFIL === 'producao';
+const canPedidos = () => PERFIL === 'producao' || PERFIL === 'adm';
+function toast(msg){ $$('.toast').forEach(x => x.remove()); const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(), 2600); }
+
+/* ---------- persistência ---------- */
+function saveLocal(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(S)); }catch(e){} }
+function loadLocal(){ try{ const r = localStorage.getItem(LS_KEY); return r ? JSON.parse(r) : null; }catch(e){ return null; } }
+
+const Store = {
+  async put(col, obj){
+    obj = clone(obj); S[col][obj.id] = obj;
+    if (MODE==='fb') await fs.collection(col).doc(obj.id).set(obj); else saveLocal();
+    render();
+  },
+  async contador(campo){
+    if (MODE==='fb'){
+      const ref = fs.collection('config').doc('geral');
+      return fs.runTransaction(async t => { const c = await t.get(ref); const n = (c.exists && c.data()[campo]) || 1; t.set(ref, {[campo]:n+1}, {merge:true}); return n; });
+    }
+    const n = S.config[campo] || 1; S.config[campo] = n+1; saveLocal(); return n;
+  },
+  async putMany(list){
+    list = list.map(([c,o]) => [c, clone(o)]); list.forEach(([c,o]) => S[c][o.id] = o);
+    if (MODE==='fb'){ const bt = fs.batch(); list.forEach(([c,o]) => bt.set(fs.collection(c).doc(o.id), o)); await bt.commit(); } else saveLocal();
+    render();
+  },
+  async del(col, id){
+    delete S[col][id];
+    if (MODE==='fb') await fs.collection(col).doc(id).delete(); else saveLocal();
+    render();
+  },
+  async setConfig(patch){
+    Object.assign(S.config, patch);
+    if (MODE==='fb') await fs.collection('config').doc('geral').set(patch, {merge:true}); else saveLocal();
+    render();
+  },
+  /* Gera o próximo número de lote de forma atômica e fixa na batida. */
+  async gerarLote(batidaId){
+    if (MODE==='fb'){
+      const cRef = fs.collection('config').doc('geral'), bRef = fs.collection('batidas').doc(batidaId);
+      const n = await fs.runTransaction(async t => {
+        const c = await t.get(cRef), b = await t.get(bRef);
+        if (!b.exists || b.data().lote) throw new Error('Esta batida já tem lote.');
+        const num = (c.exists && c.data().proximoLote) || 1;
+        const hist = (b.data().historico||[]).concat([{em:agora(), por:quem(), txt:`Lote ${num} gerado`}]);
+        t.set(cRef, {proximoLote:num+1}, {merge:true});
+        t.update(bRef, {lote:num, status:'liberada', liberadoEm:agora(), historico:hist});
+        return num;
+      });
+      return n;
+    }
+    const b = S.batidas[batidaId];
+    if (b.lote) throw new Error('Esta batida já tem lote.');
+    const num = S.config.proximoLote || 1;
+    b.lote = num; b.status = 'liberada'; b.liberadoEm = agora();
+    b.historico = (b.historico||[]).concat([{em:agora(), por:quem(), txt:`Lote ${num} gerado`}]);
+    S.config.proximoLote = num + 1;
+    saveLocal(); render();
+    return num;
+  }
+};
+
+/* ---------- regras derivadas ---------- */
+const produtos = () => Object.values(S.produtos).sort((a,b)=> (a.ordem??99)-(b.ordem??99) || String(a.codigo).localeCompare(String(b.codigo), 'pt', {numeric:true}));
+const prodNome = id => S.produtos[id]?.nome || '—';
+const curto = n => String(n||'').replace(/\s*-\s*1\s?KG$/i,'');
+const prodCod = id => S.produtos[id]?.codigo ?? '?';
+const prodPorCodigo = c => Object.values(S.produtos).find(p => String(p.codigo) === String(c));
+const ativas = () => Object.values(S.batidas).filter(b => b.status !== 'cancelada');
+const kgBatida = b => b.status==='produzida' ? (b.kgReal ?? b.kg) : b.kg;
+const alocadoBatida = b => (b.alocacoes||[]).reduce((s,a)=>s+a.qtd, 0);
+const saldoBatida = b => kgBatida(b) - alocadoBatida(b) + (b.ajustes||[]).reduce((s,a)=>s+a.qtd,0);
+let IDX = null;
+function indice(){
+  if (IDX) return IDX;
+  const aloc = new Map(), ped = new Set();
+  for (const b of Object.values(S.batidas)) if (b.status !== 'cancelada') for (const a of b.alocacoes||[]){
+    const k = a.pedidoId+'|'+a.item; if (!aloc.has(k)) aloc.set(k, []); aloc.get(k).push({b, a}); ped.add(a.pedidoId); }
+  return IDX = {aloc, ped};
+}
+function alocacoesItem(pid, i){ return indice().aloc.get(pid+'|'+i) || []; }
+const alocadoItem = (pid, idx) => alocacoesItem(pid, idx).reduce((s,x)=>s+x.a.qtd, 0);
+function pedidoTemAlocacao(pid){ return indice().ped.has(pid); }
+function statusPedido(p){
+  if (p.expedido) return 'expedido';
+  let tot=0, al=0, prontos=true;
+  p.itens.forEach((it,i) => { tot += it.qtd; const xs = alocacoesItem(p.id, i); xs.forEach(x => { al += x.a.qtd; if (x.b.status!=='produzida') prontos=false; }); });
+  if (al===0) return 'aguardando';
+  if (al < tot) return 'parcial';
+  return prontos ? 'pronto' : 'programado';
+}
+const ST_PED = {aguardando:['Aguardando programação','crit'], parcial:['Parcial','warn'], programado:['Programado','info'], pronto:['Pronto p/ expedir','ok'], expedido:['Expedido','']};
+const ST_BAT = {planejada:['Planejada','info'], liberada:['Lote gerado','warn'], produzida:['Produzida','ok'], cancelada:['Cancelada','crit']};
+const pillPed = s => `<span class="pill ${ST_PED[s][1]}">${ST_PED[s][0]}</span>`;
+const pillBat = s => `<span class="pill ${ST_BAT[s][1]}">${ST_BAT[s][0]}</span>`;
+const loteTag = b => b.lote ? `<span class="lote">${b.lote}</span>` : `<span class="lote none">sem lote</span>`;
+
+function itensPendentes(produtoId){
+  const out=[];
+  for (const p of Object.values(S.pedidos)){
+    if (p.expedido) continue;
+    p.itens.forEach((it,i) => {
+      if (produtoId && it.produtoId!==produtoId) return;
+      const pend = it.qtd - alocadoItem(p.id, i);
+      if (pend > 0) out.push({p, i, it, pend});
+    });
+  }
+  return out.sort((a,b) => (a.p.dataPrevista||'9999').localeCompare(b.p.dataPrevista||'9999') || (a.p.emissao||'').localeCompare(b.p.emissao||'') || String(a.p.numero).localeCompare(String(b.p.numero)));
+}
+function resumoProduto(pid){
+  const pend = itensPendentes(pid).reduce((s,x)=>s+x.pend, 0);
+  let estoque=0, programado=0;
+  for (const b of ativas()) if (b.produtoId===pid){ const s = saldoBatida(b); if (s<=0) continue; if (b.status==='produzida') estoque+=s; else programado+=s; }
+  const falta = Math.max(0, pend - estoque - programado);
+  return {pend, estoque, programado, falta, batidas: Math.ceil(falta/CAPACIDADE)};
+}
+function consumoMP(produtoId, kg){
+  const p = S.produtos[produtoId]; if (!p || !p.formula?.length) return [];
+  return p.formula.map(f => ({mp: S.materias[f.mpId], kg: f.kgPor500 * kg / CAPACIDADE})).filter(x => x.mp);
+}
+
+/* ---------- ícones ---------- */
+const IC = {
+  painel:'<path d="M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z"/>',
+  pedidos:'<path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h8M9 17h8"/>',
+  planejamento:'<path d="M4 4h16v16H4z"/><path d="M4 9h16M9 9v11"/>',
+  calendario:'<path d="M3 5h18v16H3zM3 10h18M8 3v4M16 3v4"/>',
+  inicio:'<path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/>',
+  chegou:'<path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 17v3h16v-3"/>',
+  contar:'<path d="M9 3h6v3H9z"/><path d="M8 4H5v17h14V4h-3"/><path d="M8 12l2 2 4-4"/>',
+  analise:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  compras:'<path d="M3 4h2l2.5 11h11L21 7H6.2"/><circle cx="9" cy="19.5" r="1.5"/><circle cx="17" cy="19.5" r="1.5"/>',
+  estoque:'<path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
+  lotes:'<path d="M3 7l9-4 9 4-9 4zM3 12l9 4 9-4M3 17l9 4 9-4"/>',
+  cadastros:'<path d="M12 3a4 4 0 110 8 4 4 0 010-8zM4 21c0-4 4-6 8-6s8 2 8 6"/>'
+};
+const svg = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">${IC[k]}</svg>`;
+const NAV_PROD = [['inicio','Início'],['pedidos','Pedidos'],['planejamento','Planejar produção'],['calendario','Calendário'],['estoque','Estoque'],['compras','Compras']];
+const NAV_MAIS = [['painel','Indicadores'],['analise','Análise'],['lotes','Produto acabado'],['cadastros','Cadastros']];
+const NAV_ADM = [['pedidos','Pedidos'],['calendario','Calendário']];
+const NAV_DIR = [['painel','Painel'],['analise','Análise'],['compras','Compras'],['calendario','Calendário'],['pedidos','Pedidos'],['estoque','Estoque'],['lotes','Produto acabado'],['cadastros','Cadastros']];
+function navHtml(){
+  const a = ([k,t]) => `<a href="#${k}" class="${VIEW===k?'on':''}">${svg(k==='inicio'?'inicio':k)}${t}${k==='compras'?badgeCompras():''}</a>`;
+  if (PERFIL==='diretor') return `<nav class="nav">${NAV_DIR.map(a).join('')}</nav>`;
+  if (PERFIL==='adm') return `<nav class="nav">${NAV_ADM.map(a).join('')}</nav>`;
+  const abre = NAV_MAIS.some(n => n[0]===VIEW);
+  return `<nav class="nav">${NAV_PROD.map(a).join('')}</nav><details class="nav-more" ${abre?'open':''}><summary>Mais opções ▾</summary><nav class="nav">${NAV_MAIS.map(a).join('')}</nav></details>`;
+}
+const NAV = [['painel','Painel'],['pedidos','Pedidos'],['planejamento','Planejamento'],['calendario','Calendário'],['lotes','Produto acabado'],['estoque','Matéria-prima'],['compras','Compras'],['cadastros','Cadastros']];
+
+/* ---------- casca ---------- */
+function render(){
+  IDX = null;
+  if (!READY) return;
+  document.body.classList.toggle('readonly', !canEdit());
+  document.body.classList.toggle('diretor', PERFIL==='diretor');
+  document.body.classList.toggle('simples', SIMPLES);
+  document.body.classList.toggle('noped', !canPedidos());
+  if (VIEW==='inicio' && PERFIL==='diretor') VIEW = 'painel';
+  if (PERFIL==='adm' && !['pedidos','calendario'].includes(VIEW)) VIEW = 'pedidos';
+  const nAg = PERFIL==='diretor' ? aguardandoDiretor().length : 0;
+  document.title = (nAg ? `(${nAg}) ` : '') + 'Quimivet PCP';
+  iniciarLembretes();
+  const root = $('#root');
+  if (!$('.app', root)){
+    root.innerHTML = `<div class="app"><aside class="side"></aside><main id="main"></main></div>`;
+  }
+  $('.side').innerHTML = `
+    <div class="brand"><b>Quimivet PCP</b><span>Produção · Lotes · Estoque</span></div>
+    ${navHtml()}
+    <div class="side-foot">
+      <label class="chk"><input type="checkbox" id="detSel" ${SIMPLES?'':'checked'}> Mostrar detalhes</label>
+      ${MODE==='local' ? `
+        <span class="mode"><span class="dot"></span>Modo demonstração</span>
+        <label class="f">Ver como
+          <select id="perfilSel"><option value="producao" ${PERFIL==='producao'?'selected':''}>Produção</option><option value="diretor" ${PERFIL==='diretor'?'selected':''}>Diretor</option><option value="adm" ${PERFIL==='adm'?'selected':''}>Administrativo</option></select>
+        </label>
+        <button class="btn sm" data-act="resetDemo">Restaurar exemplo</button>` : `
+        <span class="mode"><span class="dot ok"></span>${esc(USER?.email||'')}</span>
+        <span class="muted">Perfil: ${{producao:'Produção', diretor:'Diretor', adm:'Administrativo'}[PERFIL]}</span>
+        <button class="btn sm" data-act="sair">Sair</button>`}
+    </div>`;
+  const main = $('#main');
+  const fn = {painel:vPainel, pedidos:vPedidos, planejamento:vPlanejamento, calendario:vCalendario, lotes:vLotes, estoque:vEstoque, compras:vCompras, cadastros:vCadastros, inicio:vInicio, analise:vAnalise}[VIEW] || vPainel;
+  main.innerHTML = faixaAvisos() + fn();
+  if (VIEW==='calendario') bindCalendario();
+}
+
+/* ---------- PAINEL ---------- */
+function vPainel(){
+  const h = hoje();
+  const prodHoje = ativas().filter(b => b.status==='produzida' && b.data===h);
+  const kgHoje = prodHoje.reduce((s,b)=>s+kgBatida(b),0);
+  const progHoje = ativas().filter(b => b.data===h && b.status!=='produzida');
+  const abertos = Object.values(S.pedidos).filter(p => !p.expedido && statusPedido(p)!=='pronto');
+  const pendKg = itensPendentes().reduce((s,x)=>s+x.pend,0);
+  const estoque = ativas().filter(b=>b.status==='produzida').reduce((s,b)=>s+Math.max(0,saldoBatida(b)),0);
+  const prontos = Object.values(S.pedidos).filter(p => statusPedido(p)==='pronto').length;
+
+  const rows = produtos().map(p => ({p, r: resumoProduto(p.id)})).filter(x => x.r.pend || x.r.estoque || x.r.programado);
+  const mpAlerta = Object.values(S.materias).map(m => ({m, s:situacaoMP(m)})).filter(x => x.s.st==='crit' || x.s.st==='repor' || x.s.st==='comprando').sort((a,b)=>(a.s.st==='crit'?0:1)-(b.s.st==='crit'?0:1));
+  const prox = ativas().filter(b => b.data>=h && b.data<=addDias(h,7) && b.status!=='produzida').sort((a,b)=>a.data.localeCompare(b.data));
+
+  return `
+  <div class="page-head"><div><div class="eyebrow">${fd(h)}</div><h1>Painel da produção</h1></div>
+    <div class="actions edit-only"><button class="btn" data-act="importar">Importar PDF</button><button class="btn" data-act="novoPedido">Lançar pedido</button><button class="btn pri" data-act="novaBatida">Nova batida</button></div></div>
+  <div class="grid g-kpi" style="margin-bottom:16px">
+    <div class="panel kpi"><div class="eyebrow">Produzido hoje</div><div class="v">${nf(kgHoje)} <small>kg</small></div><div class="s">${prodHoje.length} batida(s) · ${progHoje.length} ainda programada(s) hoje</div></div>
+    <div class="panel kpi"><div class="eyebrow">Demanda sem programação</div><div class="v">${nf(pendKg)} <small>kg</small></div><div class="s">${abertos.length} pedido(s) em aberto</div></div>
+    <div class="panel kpi"><div class="eyebrow">Prontos p/ expedir</div><div class="v">${prontos}</div><div class="s">pedidos com todos os lotes produzidos</div></div>
+    <div class="panel kpi"><div class="eyebrow">Estoque acabado livre</div><div class="v">${nf(estoque)} <small>kg</small></div><div class="s">${nf(Math.floor(estoque/10))} caixas fechadas</div></div>
+    <div class="panel kpi"><div class="eyebrow">Matéria-prima a repor</div><div class="v" style="color:${mpAlerta.some(x=>x.s.st==='crit')?'var(--crit)':mpAlerta.some(x=>x.s.st==='repor')?'var(--warn)':'inherit'}">${mpAlerta.filter(x=>x.s.st!=='comprando').length}</div><div class="s">${mpAlerta.filter(x=>x.s.st==='crit').length} para comprar já · ${mpAlerta.filter(x=>x.s.st==='comprando').length} em compra</div></div>
+  </div>
+  ${PERFIL==='diretor' ? painelComprasDiretor() : ''}
+  <div class="grid g-2" style="align-items:start">
+    <div class="grid">
+      <section class="panel"><div class="panel-h"><h2>Produção diária</h2><span class="muted small">kg produzidos · últimos 14 dias</span></div><div class="panel-b">${chartProducao()}</div></section>
+      <section class="panel"><div class="panel-h"><h2>Demanda por produto</h2><a href="#planejamento" class="small">Abrir planejamento →</a></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Produto</th><th class="r">Pendente</th><th class="r">Estoque</th><th class="r">Programado</th><th class="r">Falta</th><th></th></tr></thead><tbody>
+        ${rows.length ? rows.map(({p,r}) => `<tr><td><span class="mono muted">${esc(p.codigo)}</span> ${esc(curto(p.nome))}</td><td class="r mono">${nf(r.pend)}</td><td class="r mono">${nf(r.estoque)}</td><td class="r mono">${nf(r.programado)}</td><td class="r mono">${r.falta?`<b style="color:var(--crit)">${nf(r.falta)}</b>`:'—'}</td><td>${r.falta?`<span class="pill crit">${r.batidas} batida(s)</span>`:`<span class="pill ok">coberto</span>`}</td></tr>`).join('') : `<tr><td colspan="6" class="empty">Nenhuma demanda em aberto.</td></tr>`}
+        </tbody></table></div></section>
+    </div>
+    <div class="grid"><section class="panel"><div class="panel-h"><h2>Próximos 7 dias</h2><a href="#calendario" class="small">Calendário →</a></div>
+      <div class="tbl-wrap"><table><tbody>
+      ${prox.length ? prox.map(b => `<tr class="click" data-act="batida" data-id="${b.id}"><td class="mono">${fd(b.data).slice(0,5)}</td><td><b>${esc(prodNome(b.produtoId))}</b><div class="small muted">${clientesBatida(b) || 'sem pedido vinculado'}</div></td><td class="r mono">${nf(b.kg)} kg</td><td>${loteTag(b)}</td></tr>`).join('') : `<tr><td class="empty">Nada programado para a próxima semana.</td></tr>`}
+      </tbody></table></div></section>
+      <section class="panel"><div class="panel-h"><h2>Matéria-prima</h2><a href="#estoque" class="small">Estoque →</a></div>
+        <div class="tbl-wrap"><table><tbody>
+        ${mpAlerta.length ? mpAlerta.map(({m,s}) => `<tr class="click" data-act="mpDet" data-id="${m.id}"><td><b>${esc(m.nome)}</b><div class="small muted">dura ${s.dur===Infinity?'—':Math.max(0,Math.floor(s.dur))+' dias'} · entrega em ${s.lead} dias</div></td><td class="r mono small">${s.sug?`comprar<br><b>${nf(s.sug)} ${esc(mpUn(m))}</b>`:comprasAbertasMP(m.id).map(c => `${scNum(c)}${c.previsao?'<br>prev. '+fd(c.previsao).slice(0,5):''}`).join('<br>')}</td><td>${pillMP(s.st)}</td></tr>`).join('') : `<tr><td class="empty">Todos os itens estão acima do ponto de reposição.</td></tr>`}
+        </tbody></table></div></section></div>
+  </div>`;
+}
+function clientesBatida(b){
+  const nomes = [...new Set((b.alocacoes||[]).map(a => S.pedidos[a.pedidoId]?.cliente).filter(Boolean))];
+  return esc(nomes.map(n => n.split(' ').slice(0,2).join(' ')).join(', '));
+}
+function chartProducao(){
+  const h = hoje(), dias = [...Array(14)].map((_,i) => addDias(h, i-13));
+  const vals = dias.map(d => ativas().filter(b => b.status==='produzida' && b.data===d).reduce((s,b)=>s+kgBatida(b),0));
+  const W=640, H=200, pl=44, pb=24, pt=10, max = Math.max(1000, Math.ceil(Math.max(...vals)/500)*500);
+  const bw = (W-pl)/dias.length;
+  const y = v => pt + (H-pt-pb) * (1 - v/max);
+  const ticks = []; for (let v=0; v<=max; v+=500) ticks.push(v);
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Produção diária em kg">
+    ${ticks.map(v => `<line class="grid" x1="${pl}" x2="${W}" y1="${y(v)}" y2="${y(v)}"/><text x="${pl-6}" y="${y(v)+4}" text-anchor="end">${v}</text>`).join('')}
+    ${vals.map((v,i) => { const x = pl + i*bw + bw*.18, w = bw*.64; const wd = new Date(dias[i]+'T12:00:00').getDay();
+      return `${v?`<rect class="bar ${dias[i]===h?'today':''}" x="${x}" y="${y(v)}" width="${w}" height="${y(0)-y(v)}" rx="2"><title>${fd(dias[i])}: ${nf(v)} kg</title></rect>`:''}
+      <text x="${x+w/2}" y="${H-6}" text-anchor="middle" ${wd===0||wd===6?'opacity=".45"':''}>${dias[i].slice(8)}</text>`; }).join('')}
+  </svg>`;
+}
+
+/* ---------- PEDIDOS ---------- */
+let PED_BUSCA = '';
+function producaoPedido(p){
+  const vistos = new Set(), out = [];
+  p.itens.forEach((_,i) => alocacoesItem(p.id,i).forEach(({b}) => { if (vistos.has(b.id)) return; vistos.add(b.id);
+    out.push(b.lote ? `<div><span class="lote">${b.lote}</span> <span class="small ${b.status==='produzida'?'':'muted'}">${b.status==='produzida'?'produzido':'programado'} ${fd(b.data).slice(0,5)}</span></div>` : `<div class="small muted">programado ${fd(b.data).slice(0,5)}</div>`); }));
+  return out.join('') || '<span class="muted">—</span>';
+}
+function vPedidos(){
+  const all = Object.values(S.pedidos).map(p => ({p, s: statusPedido(p)}));
+  const F = {aberto: x => x.s!=='expedido', pronto: x => x.s==='pronto', expedido: x => x.s==='expedido', todos: () => true};
+  const q = PED_BUSCA.trim().toLowerCase();
+  const casa = x => !q || String(x.p.numero).includes(q) || (x.p.cliente||'').toLowerCase().includes(q)
+    || x.p.itens.some((_,i) => alocacoesItem(x.p.id,i).some(({b}) => String(b.lote)===q));
+  const list = all.filter(q ? () => true : F[PED_FILTRO]).filter(casa).sort((a,b) => String(b.p.numero).localeCompare(String(a.p.numero), 'pt', {numeric:true}));
+  const MAX = 150;
+  return `
+  <div class="page-head"><div><h1>Pedidos</h1><p>Pedidos de venda vindos do comercial. O número é o mesmo do sistema de vendas, e é por ele que os dois sistemas conversam.</p></div>
+    <div class="actions ped-edit"><button class="btn" data-act="novoPedido">Lançar manualmente</button><button class="btn pri" data-act="importar">Importar PDF</button></div></div>
+  <div class="actions" style="margin-bottom:12px;justify-content:space-between">
+    <div class="tabs">${[['aberto','Em aberto'],['pronto','Prontos p/ expedir'],['expedido','Expedidos'],['todos','Todos']].map(([k,t]) => `<button class="tab ${PED_FILTRO===k&&!q?'on':''}" data-act="pedFiltro" data-k="${k}">${t} <span class="muted">${all.filter(F[k]).length}</span></button>`).join('')}</div>
+    <input id="pedBusca" type="search" placeholder="Buscar nº do pedido, cliente ou lote" value="${esc(PED_BUSCA)}" style="flex:1;max-width:340px;min-width:200px" aria-label="Buscar pedido">
+  </div>
+  <section class="panel"><div class="tbl-wrap"><table>
+    <thead><tr><th>Pedido</th><th class="adv">Emissão</th><th>Cliente</th><th class="adv">Cidade</th><th>Itens</th><th class="adv">Previsão</th><th>Produção (lote e data)</th><th>Situação</th></tr></thead>
+    <tbody>${list.length ? list.slice(0,MAX).map(({p,s}) => `<tr class="click" data-act="pedido" data-id="${esc(p.id)}">
+      <td class="mono"><b>${esc(p.numero)}</b></td><td class="mono adv">${fd(p.emissao)}</td>
+      <td>${esc(p.cliente)}<div class="small muted">${esc(p.vendedor||'')}</div></td><td class="adv">${esc(p.cidade||'')}${p.uf?'/'+esc(p.uf):''}</td>
+      <td class="small">${p.itens.map(it => `${esc(curto(prodNome(it.produtoId)))} <span class="mono">${nf(it.qtd)}</span>`).join('<br>')}</td>
+      <td class="mono adv">${p.dataPrevista?fd(p.dataPrevista):'<span class="muted">—</span>'}</td>
+      <td>${producaoPedido(p)}</td><td>${pillPed(s)}</td></tr>`).join('') : `<tr><td colspan="8" class="empty">${q?'Nenhum pedido encontrado para "'+esc(PED_BUSCA)+'".':'Nenhum pedido aqui.'}</td></tr>`}
+    </tbody></table></div>
+    ${list.length>MAX?`<div class="panel-b small muted" style="border-top:1px solid var(--line)">Mostrando os ${MAX} mais recentes de ${list.length}. Use a busca para encontrar pedidos antigos.</div>`:''}</section>`;
+}
+function modalPedidoForm(id, pre, impK){
+  const p = id ? clone(S.pedidos[id]) : pre ? clone(pre) : {numero:'', emissao:hoje(), vendedor:'', cliente:'', cidade:'', uf:'', obs:'', dataPrevista:'', itens:[{produtoId:'', qtd:0}]};
+  const travado = id && pedidoTemAlocacao(id);
+  const opts = sel => `<option value="">Selecione…</option>` + produtos().map(pr => `<option value="${pr.id}" ${pr.id===sel?'selected':''}>${esc(pr.codigo)} · ${esc(pr.nome)}</option>`).join('');
+  const itemRow = (it) => `<tr><td><select class="it-prod" ${travado?'disabled':''}>${opts(it.produtoId)}</select></td><td><input class="it-qtd" type="number" min="0" step="10" value="${it.qtd||''}" style="width:110px" ${travado?'disabled':''}></td><td class="small muted it-cx"></td><td>${travado?'':'<button class="btn sm ghost" data-act="rmItem" aria-label="Remover item">✕</button>'}</td></tr>`;
+  openModal(`
+    <div class="modal-h"><div><div class="eyebrow">${id?'Editar pedido':pre?'Conferir pedido importado do PDF':'Lançar pedido'}</div><h2>${id?'Pedido '+esc(p.numero):pre?esc(pre.arquivo||'Pedido importado'):'Pedido do sistema de vendas'}</h2></div><button class="btn ghost" data-act="close" aria-label="Fechar">✕</button></div>
+    <form class="modal-b" id="fPed" data-imp="${impK??''}">
+      ${pre?.avisos?.length?`<div class="note warn small">${pre.avisos.map(esc).join('<br>')}</div>`:''}
+      <div class="form">
+        <label class="f">Nº do pedido<input id="pNum" required value="${esc(p.numero)}" ${id?'disabled':''} placeholder="10013735" class="mono"></label>
+        <label class="f">Emitido em<input id="pEmi" type="date" value="${esc(p.emissao)}"></label>
+        <label class="f">Vendedor<input id="pVen" value="${esc(p.vendedor)}"></label>
+        <label class="f">Previsão de produção<input id="pPrev" type="date" value="${esc(p.dataPrevista||'')}"></label>
+        <label class="f span2">Cliente<input id="pCli" required value="${esc(p.cliente)}"></label>
+        <label class="f">Cidade<input id="pCid" value="${esc(p.cidade)}"></label>
+        <label class="f">UF<input id="pUf" maxlength="2" value="${esc(p.uf)}" style="text-transform:uppercase"></label>
+      </div>
+      <div><div class="eyebrow" style="margin-bottom:6px">Itens (kg = unidades de 1 kg)</div>
+        ${travado?'<div class="note warn" style="margin-bottom:8px">Este pedido já tem lote vinculado, por isso os itens não podem mais ser alterados.</div>':''}
+        <div class="tbl-wrap"><table><thead><tr><th>Produto</th><th>Qtde (kg)</th><th>Caixas</th><th></th></tr></thead><tbody id="itRows">${p.itens.map(itemRow).join('')}</tbody></table></div>
+        ${travado?'':'<button type="button" class="btn sm" data-act="addItem" style="margin-top:8px">+ Item</button>'}
+      </div>
+      <label class="f">Observações<textarea id="pObs" rows="2">${esc(p.obs)}</textarea></label>
+      <div class="err" id="pErr"></div>
+    </form>
+    <div class="modal-f"><button class="btn" data-act="close">Cancelar</button><button class="btn pri" data-act="salvarPedido" data-id="${esc(id||'')}">Salvar pedido</button></div>`);
+  window._itemRow = itemRow;
+  const upd = () => $$('#itRows tr').forEach(tr => { const q = +$('.it-qtd',tr).value||0; $('.it-cx',tr).textContent = q ? (q%10 ? `${Math.floor(q/10)} cx + ${q%10} un` : `${q/10} cx`) : ''; });
+  $('#itRows').addEventListener('input', upd); upd();
+}
+async function salvarPedido(id){
+  const err = $('#pErr'); err.textContent='';
+  const numero = id ? S.pedidos[id].numero : $('#pNum').value.trim();
+  const cliente = $('#pCli').value.trim();
+  if (!numero) return err.textContent = 'Informe o número do pedido.';
+  if (!id && S.pedidos[numero]) return err.textContent = `O pedido ${numero} já foi lançado.`;
+  if (!cliente) return err.textContent = 'Informe o cliente.';
+  let itens = id && pedidoTemAlocacao(id) ? S.pedidos[id].itens : $$('#itRows tr').map(tr => ({produtoId: $('.it-prod',tr).value, qtd: +$('.it-qtd',tr).value||0})).filter(it => it.produtoId || it.qtd);
+  if (!itens.length) return err.textContent = 'Inclua pelo menos um item.';
+  if (itens.some(it => !it.produtoId || it.qtd<=0)) return err.textContent = 'Cada item precisa de produto e quantidade maior que zero.';
+  const impK = $('#fPed').dataset.imp;
+  const base = id ? S.pedidos[id] : {id: numero, numero, criadoEm: agora(), criadoPor: quem(), ...(impK!=='' && window._imp?.[+impK] ? {origem:'pdf', arquivo:window._imp[+impK].arquivo} : {})};
+  await Store.put('pedidos', {...base, emissao:$('#pEmi').value, vendedor:$('#pVen').value.trim(), cliente, cidade:$('#pCid').value.trim(), uf:$('#pUf').value.trim().toUpperCase(), dataPrevista:$('#pPrev').value, obs:$('#pObs').value.trim(), itens});
+  closeModal(); toast(id ? 'Pedido atualizado' : `Pedido ${numero} lançado`);
+  if (impK!=='' && window._imp?.[+impK]){ window._imp[+impK].lancado = true; window._imp[+impK].numero = numero; modalImportar(true); }
+}
+
+function modalPedido(id){
+  const p = S.pedidos[id]; if (!p) return;
+  const s = statusPedido(p);
+  const linhas = p.itens.map((it,i) => {
+    const xs = alocacoesItem(p.id, i), al = xs.reduce((t,x)=>t+x.a.qtd,0), pend = it.qtd - al;
+    return `<tr><td><span class="mono muted">${esc(prodCod(it.produtoId))}</span> ${esc(prodNome(it.produtoId))}</td><td class="r mono">${nf(it.qtd)}</td>
+      <td>${xs.map(x => `<div class="actions" style="gap:6px;margin:2px 0"><span class="lote" data-act="batida" data-id="${x.b.id}" style="cursor:pointer">${x.b.lote||'sem lote'}</span><span class="mono small">${nf(x.a.qtd)} kg</span><span class="small muted">prod. ${fd(x.b.data)}</span>${pillBat(x.b.status)}</div>`).join('') || '<span class="muted">—</span>'}</td>
+      <td class="r">${pend>0?`<span class="mono" style="color:var(--crit)">${nf(pend)}</span> <button class="btn sm edit-only" data-act="atender" data-id="${esc(p.id)}" data-i="${i}">Atender</button>`:'<span class="pill ok">ok</span>'}</td></tr>`;
+  }).join('');
+  openModal(`
+    <div class="modal-h"><div><div class="eyebrow">Pedido · emitido ${fd(p.emissao)}${p.vendedor?' por '+esc(p.vendedor):''}</div><h2 class="mono">${esc(p.numero)} ${pillPed(s)}</h2>
+      <div style="margin-top:4px">${esc(p.cliente)} <span class="muted">· ${esc(p.cidade)}${p.uf?'/'+esc(p.uf):''}</span></div></div>
+      <button class="btn ghost" data-act="close" aria-label="Fechar">✕</button></div>
+    <div class="modal-b">
+      <div class="tbl-wrap"><table><thead><tr><th>Produto</th><th class="r">Qtde</th><th>Lote(s) e data de produção</th><th class="r">Pendente</th></tr></thead><tbody>${linhas}</tbody></table></div>
+      ${p.dataPrevista?`<div class="small"><b>Previsão combinada:</b> ${fd(p.dataPrevista)}</div>`:''}
+      ${p.obs?`<div class="note"><b>OBS:</b> ${esc(p.obs)}</div>`:''}
+      <div><div class="eyebrow" style="margin-bottom:6px">Texto para o comercial</div><textarea id="txtCom" rows="${p.itens.length+2}" readonly class="mono" style="width:100%;font-size:12.5px">${esc(textoComercial(p))}</textarea></div>
+    </div>
+    <div class="modal-f">
+      ${!pedidoTemAlocacao(p.id)?`<button class="btn danger edit-only" data-act="excluirPedido" data-id="${esc(p.id)}" style="margin-right:auto">Excluir</button>`:''}
+      <button class="btn" data-act="copiarCom">Copiar texto</button>
+      <button class="btn ped-edit" data-act="editarPedido" data-id="${esc(p.id)}">Editar</button>
+      ${s==='pronto'?`<button class="btn pri edit-only" data-act="expedir" data-id="${esc(p.id)}">Marcar como expedido</button>`:''}
+      ${s==='expedido'?`<button class="btn edit-only" data-act="desexpedir" data-id="${esc(p.id)}">Desfazer expedição</button>`:''}
+    </div>`, 'wide');
+}
+function textoComercial(p){
+  const l = [`Pedido ${p.numero} – ${p.cliente}`];
+  p.itens.forEach((it,i) => {
+    const xs = alocacoesItem(p.id, i).filter(x => x.b.lote);
+    const pend = it.qtd - alocadoItem(p.id, i);
+    l.push(`${prodNome(it.produtoId)} ${nf(it.qtd)} kg: ` + (xs.length ? xs.map(x => `lote ${x.b.lote} (${fd(x.b.data)})${xs.length>1?' '+nf(x.a.qtd)+' kg':''}`).join(' + ') : 'aguardando lote') + (pend>0 && xs.length ? ` · faltam ${nf(pend)} kg` : ''));
+  });
+  return l.join('\n');
+}
+
+/* ---------- PLANEJAMENTO (a folha sulfite) ---------- */
+function vPlanejamento(){
+  const ps = produtos();
+  const com = ps.filter(p => resumoProduto(p.id).pend > 0);
+  const sem = ps.filter(p => resumoProduto(p.id).pend === 0);
+  return `
+  <div class="page-head"><div><h1>Planejamento</h1><p>A demanda de todos os pedidos somada por produto. Atenda do estoque ou de uma batida já programada, ou crie uma batida nova de até ${CAPACIDADE} kg.</p></div>
+    <div class="actions edit-only"><button class="btn pri" data-act="novaBatida">Nova batida</button></div></div>
+  <div class="sheet">
+  ${com.length ? com.map(p => {
+    const r = resumoProduto(p.id), its = itensPendentes(p.id);
+    const abertas = ativas().filter(b => b.produtoId===p.id && saldoBatida(b)>0).sort(ordemFifo);
+    return `<section class="panel prod-card">
+      <div class="panel-h"><h2><span class="code">${esc(p.codigo)}</span>${esc(p.nome)}</h2>
+        <div class="metrics">
+          <div class="metric"><b>${nf(r.pend)}</b><span>pendente</span></div>
+          <div class="metric"><b>${nf(r.estoque)}</b><span>em estoque</span></div>
+          <div class="metric adv"><b>${nf(r.programado)}</b><span>sobra programada</span></div>
+          <div class="metric ${r.falta?'crit':'ok'}"><b>${r.falta?nf(r.falta):'0'}</b><span>${r.falta?`falta · ${r.batidas} batida(s)`:'coberto'}</span></div>
+        </div>
+        <button class="btn sm pri edit-only" data-act="novaBatida" data-p="${p.id}">Nova batida</button></div>
+      <div class="tbl-wrap"><table><thead><tr><th>Pedido</th><th>Cliente</th><th class="adv">Emissão</th><th class="adv">Previsão</th><th class="r">Falta (kg)</th><th></th></tr></thead><tbody>
+      ${its.map(x => `<tr><td class="mono"><a href="#" data-act="pedido" data-id="${esc(x.p.id)}">${esc(x.p.numero)}</a></td><td>${esc(x.p.cliente)} <span class="muted small adv">${esc(x.p.cidade||'')}${x.p.uf?'/'+esc(x.p.uf):''}</span></td><td class="mono adv">${fd(x.p.emissao)}</td><td class="mono adv">${x.p.dataPrevista?fd(x.p.dataPrevista):'—'}</td><td class="r mono"><b>${nf(x.pend)}</b>${x.pend<x.it.qtd?` <span class="muted">de ${nf(x.it.qtd)}</span>`:''}</td><td class="r"><button class="btn sm edit-only" data-act="atender" data-id="${esc(x.p.id)}" data-i="${x.i}">Atender</button></td></tr>`).join('')}
+      </tbody></table></div>
+      ${abertas.length?`<div class="lots-row"><span class="eyebrow">Saldo disponível</span>${abertas.map(b => `<span class="lotchip" data-act="batida" data-id="${b.id}">${loteTag(b)} <span class="mono">${nf(saldoBatida(b))} kg</span> <span class="muted small">${b.status==='produzida'?'estoque':fd(b.data).slice(0,5)}</span></span>`).join('')}</div>`:''}
+    </section>`; }).join('') : `<div class="panel empty">Toda a demanda está atendida. Quando entrar um pedido novo, ele aparece aqui.</div>`}
+  ${sem.length?`<div class="small muted">Sem pedidos pendentes: ${sem.map(p=>esc(p.nome)).join(' · ')}</div>`:''}
+  </div>`;
+}
+const ordemFifo = (a,b) => (a.status==='produzida'?0:1)-(b.status==='produzida'?0:1) || a.data.localeCompare(b.data) || (a.lote||1e9)-(b.lote||1e9);
+
+function ledger(prodId, kg, alocs, ajustes=[]){
+  const tot = alocs.reduce((s,a)=>s+a.qtd,0), sobra = kg - tot + ajustes.reduce((s,a)=>s+a.qtd,0);
+  return `<div class="ledger">
+    <div class="l"><span class="q">${nf(kg)} kg</span><span>${esc(prodNome(prodId))} · batida</span></div>
+    ${alocs.map(a => { const p = S.pedidos[a.pedidoId]; return `<div class="l"><span class="q">− ${nf(a.qtd)}</span><span>${esc(p?.numero||a.pedidoId)} · ${esc((p?.cliente||'').split(' ').slice(0,3).join(' '))}</span></div>`; }).join('')}
+    ${ajustes.map(a => `<div class="l"><span class="q">${a.qtd<0?'− '+nf(-a.qtd):'+ '+nf(a.qtd)}</span><span>ajuste · ${esc(a.motivo)}</span></div>`).join('')}
+    <div class="l tot ${sobra<0?'crit':'ok'}"><span class="q">${sobra<0?'− '+nf(-sobra):nf(sobra)} kg</span><span>${sobra<0?'excede a batida':sobra>0?'sobra → estoque':'batida fechada'}</span></div>
+  </div>`;
+}
+
+function modalNovaBatida(prodId, data){
+  prodId = prodId || '';
+  openModal(`
+    <div class="modal-h"><div><div class="eyebrow">Nova batida</div><h2>Programar produção</h2></div><button class="btn ghost" data-act="close" aria-label="Fechar">✕</button></div>
+    <div class="modal-b">
+      <div class="form">
+        <label class="f span2">Produto<select id="nbProd"><option value="">Selecione…</option>${produtos().map(p => `<option value="${p.id}" ${p.id===prodId?'selected':''}>${esc(p.codigo)} · ${esc(p.nome)}</option>`).join('')}</select></label>
+        <label class="f">Data de produção<input id="nbData" type="date" value="${data||addDias(hoje(),1)}"></label>
+        <label class="f">Quantidade (kg)<input id="nbKg" type="number" min="10" max="${CAPACIDADE}" step="10" value="${CAPACIDADE}"></label>
+      </div>
+      <div id="nbBody"></div>
+      <div class="err" id="nbErr"></div>
+    </div>
+    <div class="modal-f"><button class="btn" data-act="close">Cancelar</button><button class="btn pri" data-act="salvarBatida">Programar batida</button></div>`, 'wide');
+  const body = () => {
+    const pid = $('#nbProd').value, kg = +$('#nbKg').value||0;
+    if (!pid){ $('#nbBody').innerHTML = '<div class="note">Escolha o produto para ver os pedidos pendentes.</div>'; return; }
+    const its = itensPendentes(pid); let rest = Math.min(kg, CAPACIDADE);
+    $('#nbBody').innerHTML = `
+      <div class="grid g-2" style="align-items:start">
+        <div><div class="eyebrow" style="margin-bottom:6px">Pedidos pendentes de ${esc(prodNome(pid))}</div>
+          ${its.length ? `<div class="tbl-wrap"><table><thead><tr><th></th><th>Pedido</th><th>Cliente</th><th class="r">Pend.</th><th class="r">Nesta batida</th></tr></thead><tbody>
+          ${its.map(x => { const q = Math.min(x.pend, Math.max(0,rest)); rest -= q; return `<tr data-pid="${esc(x.p.id)}" data-i="${x.i}" data-pend="${x.pend}"><td><input type="checkbox" class="nb-chk" ${q>0?'checked':''} aria-label="Incluir pedido ${esc(x.p.numero)}"></td><td class="mono">${esc(x.p.numero)}</td><td class="small">${esc(x.p.cliente)}</td><td class="r mono">${nf(x.pend)}</td><td class="r"><input type="number" class="nb-q" min="0" max="${x.pend}" step="10" value="${q||''}" style="width:90px"></td></tr>`; }).join('')}
+          </tbody></table></div><button class="btn sm" data-act="nbAuto" style="margin-top:8px">Distribuir automaticamente</button>` : '<div class="note">Nenhum pedido pendente para este produto. A batida inteira vai para o estoque.</div>'}
+        </div>
+        <div class="grid" style="gap:12px"><div><div class="eyebrow" style="margin-bottom:6px">Conta da batida</div><div id="nbLedger"></div></div><div id="nbMp"></div></div>
+      </div>`;
+    upd();
+  };
+  const alocs = () => $$('#nbBody tr[data-pid]').filter(tr => $('.nb-chk',tr).checked && +$('.nb-q',tr).value>0).map(tr => ({pedidoId:tr.dataset.pid, item:+tr.dataset.i, qtd:+$('.nb-q',tr).value}));
+  const upd = () => {
+    const pid = $('#nbProd').value, kg = +$('#nbKg').value||0; if (!pid) return;
+    $('#nbLedger').innerHTML = ledger(pid, kg, alocs());
+    $('#nbMp').innerHTML = `<div class="eyebrow" style="margin-bottom:6px">Matéria-prima necessária</div>` + tabelaNecessidadeMP(pid, kg);
+  };
+  window._nb = {body, upd, alocs};
+  $('#nbProd').addEventListener('change', body);
+  $('#nbKg').addEventListener('input', upd);
+  $('#modal').addEventListener('input', e => { if (e.target.matches('.nb-q,.nb-chk')) upd(); });
+  $('#modal').addEventListener('change', e => { if (e.target.matches('.nb-chk')) { const tr = e.target.closest('tr'); const q = $('.nb-q',tr); if (e.target.checked && !+q.value) q.value = tr.dataset.pend; upd(); } });
+  body();
+}
+async function salvarBatida(){
+  const err = $('#nbErr'); err.textContent='';
+  const pid = $('#nbProd').value, kg = +$('#nbKg').value||0, data = $('#nbData').value;
+  if (!pid) return err.textContent = 'Escolha o produto.';
+  if (!data) return err.textContent = 'Informe a data de produção.';
+  if (kg<=0 || kg>CAPACIDADE) return err.textContent = `A batida deve ter entre 1 e ${CAPACIDADE} kg.`;
+  const al = window._nb.alocs();
+  for (const tr of $$('#nbBody tr[data-pid]')) if (+$('.nb-q',tr).value > +tr.dataset.pend) return err.textContent = 'Uma das quantidades é maior que o pendente do pedido.';
+  if (al.reduce((s,a)=>s+a.qtd,0) > kg) return err.textContent = 'Os pedidos somam mais do que a batida. Aumente a batida ou reduza as quantidades.';
+  const b = {id:uid(), produtoId:pid, data, kg, status:'planejada', lote:null, alocacoes:al, criadoEm:agora(), historico:[{em:agora(), por:quem(), txt:`Batida de ${kg} kg planejada para ${fd(data)}`}]};
+  await Store.put('batidas', b);
+  closeModal(); toast('Batida programada'); modalBatida(b.id);
+}
+
+function modalAtender(pedId, i){
+  const p = S.pedidos[pedId], it = p.itens[i], pend = it.qtd - alocadoItem(pedId, i);
+  const cands = ativas().filter(b => b.produtoId===it.produtoId && saldoBatida(b)>0).sort(ordemFifo);
+  openModal(`
+    <div class="modal-h"><div><div class="eyebrow">Atender item</div><h2>${esc(prodNome(it.produtoId))} · <span class="mono">${nf(pend)} kg</span></h2><div class="muted">Pedido ${esc(p.numero)} · ${esc(p.cliente)}</div></div><button class="btn ghost" data-act="close" aria-label="Fechar">✕</button></div>
+    <div class="modal-b">
+      ${cands.length ? `<div class="note small">Ordem sugerida: primeiro o estoque mais antigo, depois as batidas programadas.</div>
+      <div class="tbl-wrap"><table><thead><tr><th>Lote</th><th>Situação</th><th>Data prod.</th><th class="r">Saldo</th><th class="r">Usar (kg)</th><th></th></tr></thead><tbody>
+      ${cands.map((b,k) => `<tr><td>${loteTag(b)}</td><td>${pillBat(b.status)}</td><td class="mono">${fd(b.data)}${b.status==='produzida'?` <span class="muted small">${diasEntre(b.data,hoje())} d</span>`:''}</td><td class="r mono">${nf(saldoBatida(b))}</td>
+        <td class="r"><input type="number" id="at_${b.id}" min="1" max="${Math.min(pend,saldoBatida(b))}" step="10" value="${Math.min(pend,saldoBatida(b))}" style="width:90px"></td>
+        <td class="r"><button class="btn sm ${k===0?'pri':''}" data-act="alocar" data-b="${b.id}" data-p="${esc(pedId)}" data-i="${i}">Alocar</button></td></tr>`).join('')}
+      </tbody></table></div>` : `<div class="note">Não há saldo de ${esc(prodNome(it.produtoId))} em estoque nem em batidas programadas.</div>`}
+      <div class="err" id="atErr"></div>
+    </div>
+    <div class="modal-f"><button class="btn" data-act="close">Fechar</button><button class="btn" data-act="novaBatida" data-p="${it.produtoId}">Criar nova batida</button></div>`, 'wide');
+}
+async function alocar(bId, pedId, i){
+  const b = clone(S.batidas[bId]), it = S.pedidos[pedId].itens[i];
+  const pend = it.qtd - alocadoItem(pedId, i), q = +$('#at_'+bId).value||0;
+  if (q<=0) return $('#atErr').textContent = 'Informe a quantidade.';
+  if (q>pend) return $('#atErr').textContent = `O item só tem ${nf(pend)} kg pendentes.`;
+  if (q>saldoBatida(b)) return $('#atErr').textContent = `Este lote só tem ${nf(saldoBatida(b))} kg de saldo.`;
+  const ex = b.alocacoes.find(a => a.pedidoId===pedId && a.item===i);
+  if (ex) ex.qtd += q; else b.alocacoes.push({pedidoId:pedId, item:i, qtd:q});
+  b.historico.push({em:agora(), por:quem(), txt:`${nf(q)} kg alocados ao pedido ${S.pedidos[pedId].numero}`});
+  await Store.put('batidas', b);
+  toast(b.lote ? `Lote ${b.lote} vinculado ao pedido` : 'Pedido incluído na batida');
+  const restante = it.qtd - alocadoItem(pedId, i);
+  if (restante>0) modalAtender(pedId, i); else modalPedido(pedId);
+}
+
+/* ---------- BATIDA (detalhe) ---------- */
+function modalBatida(id){
+  const b = S.batidas[id]; if (!b) return;
+  const edit = canEdit();
+  const al = alocadoBatida(b);
+  openModal(`
+    <div class="modal-h"><div><div class="eyebrow">Batida · ${fd(b.data)}</div><h2>${esc(prodNome(b.produtoId))} ${loteTag(b)} ${pillBat(b.status)}</h2></div><button class="btn ghost" data-act="close" aria-label="Fechar">✕</button></div>
+    <div class="modal-b">
+      <div class="grid g-2" style="align-items:start">
+        <div class="grid" style="gap:12px">
+          ${ledger(b.produtoId, kgBatida(b), b.alocacoes||[], b.ajustes||[])}
+          ${b.status==='produzida' ? blocoAjuste(b) : ''}
+          ${b.status==='planejada' && edit ? `
+            <div class="form">
+              <label class="f">Data de produção<input id="bdData" type="date" value="${b.data}"></label>
+              <label class="f">Quantidade (kg)<input id="bdKg" type="number" min="${Math.max(10,al)}" max="${CAPACIDADE}" step="10" value="${b.kg}"></label>
+            </div>
+            ${(b.alocacoes||[]).length?`<div class="small">${b.alocacoes.map((a,k)=>`<div class="actions" style="justify-content:space-between;border-bottom:1px solid var(--line);padding:4px 0"><span class="mono">${esc(S.pedidos[a.pedidoId]?.numero)}</span><span class="mono">${nf(a.qtd)} kg</span><button class="btn sm ghost" data-act="rmAloc" data-id="${b.id}" data-k="${k}">Retirar</button></div>`).join('')}</div>`:''}
+            <div class="actions"><button class="btn sm" data-act="salvarBatidaEd" data-id="${b.id}">Salvar alterações</button></div>` : ''}
+          ${b.status==='cancelada'?`<div class="note warn"><b>Cancelada:</b> ${esc(b.motivoCancel||'')}</div>`:''}
+          ${b.origem==='saldo'?`<div class="note small">Lote lançado como saldo inicial de estoque.</div>`:''}
+        </div>
+        <div class="grid" style="gap:12px">
+          ${b.status==='planejada' && edit ? `
+            <div class="confirm-box"><b>Gerar lote</b><div class="small">O sistema vai fixar o lote <span class="lote">${S.config.proximoLote}</span> com produção em <b>${fd(b.data)}</b>. Depois disso, o número e a data não podem ser alterados.</div>
+              <div class="actions"><button class="btn pri" data-act="gerarLote" data-id="${b.id}">Gerar lote ${S.config.proximoLote}</button></div></div>` : ''}
+          ${b.status==='liberada' && edit ? `
+            <div class="panel panel-b grid" style="gap:10px"><b>Registrar produção</b>
+              <label class="f">Quantidade efetivamente produzida (kg)<input id="bdReal" type="number" min="${al}" max="${CAPACIDADE}" step="1" value="${b.kg}"></label>
+              <div class="actions"><button class="btn pri" data-act="registrarProd" data-id="${b.id}">Confirmar produção</button></div></div>
+            <details><summary class="small muted" style="cursor:pointer">Cancelar este lote</summary>
+              <div class="grid" style="gap:8px;margin-top:8px"><div class="small muted">O número ${b.lote} não será reaproveitado. Os pedidos voltam a ficar pendentes.</div>
+              <label class="f">Motivo (obrigatório)<textarea id="bdMotivo" rows="2"></textarea></label>
+              <div class="actions"><button class="btn danger" data-act="cancelarLote" data-id="${b.id}">Cancelar lote ${b.lote}</button></div></div></details>` : ''}
+          ${blocoMPBatida(b)}
+          <div><div class="eyebrow" style="margin-bottom:6px">Histórico</div><div class="hist">${(b.historico||[]).map(h => `<div><span class="mono muted">${new Date(h.em).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}</span><span>${esc(h.txt)} <span class="muted">· ${esc(h.por)}</span></span></div>`).join('')}</div></div>
+        </div>
+      </div>
+      <div class="err" id="bdErr"></div>
+    </div>
+    <div class="modal-f">${b.status==='planejada' && edit ? `<button class="btn danger" data-act="excluirBatida" data-id="${b.id}" style="margin-right:auto">Excluir batida</button>`:''}<button class="btn" data-act="close">Fechar</button></div>`, 'wide');
+}
+
+/* ---------- CALENDÁRIO ---------- */
+function vCalendario(){
+  if (!CAL){ const d = new Date(); CAL = {y:d.getFullYear(), m:d.getMonth()}; }
+  const first = new Date(CAL.y, CAL.m, 1), start = new Date(first); start.setDate(1 - ((first.getDay()+6)%7));
+  const h = hoje(), mes = first.toLocaleDateString('pt-BR', {month:'long', year:'numeric'});
+  const cells = [];
+  for (let i=0;i<42;i++){ const d = new Date(start); d.setDate(start.getDate()+i); cells.push(isoDate(d)); if (i>=34 && i%7===6 && d.getMonth()!==CAL.m) break; }
+  const byDay = {}; ativas().forEach(b => (byDay[b.data] ||= []).push(b));
+  return `
+  <div class="page-head"><div><h1>Calendário de produção</h1><p>Cada cartão é uma batida, com produto, quantidade, lote e clientes de destino. Arraste uma batida planejada para outro dia para reprogramar. Depois que o lote é gerado, a data fica fixa.</p></div>
+    <div class="actions"><button class="btn" data-act="calNav" data-d="-1" aria-label="Mês anterior">←</button><b style="min-width:150px;text-align:center">${mes.charAt(0).toUpperCase()+mes.slice(1)}</b><button class="btn" data-act="calNav" data-d="1" aria-label="Próximo mês">→</button><button class="btn" data-act="calNav" data-d="0">Hoje</button></div></div>
+  <div class="legend" style="margin-bottom:10px"><span><i style="background:var(--info)"></i>Planejada</span><span><i style="background:var(--warn)"></i>Lote gerado</span><span><i style="background:var(--accent)"></i>Produzida</span></div>
+  <div class="tbl-wrap"><div style="min-width:760px">
+  <div class="cal-head">${['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'].map(d=>`<div>${d}</div>`).join('')}</div>
+  <div class="cal">${cells.map(d => { const bs = (byDay[d]||[]).sort((a,b)=>(a.lote||1e9)-(b.lote||1e9)); const kg = bs.reduce((s,b)=>s+kgBatida(b),0);
+    return `<div class="day ${d.slice(5,7)!=String(CAL.m+1).padStart(2,'0')?'out':''} ${d===h?'today':''}" data-day="${d}">
+      <div class="dh"><span class="dn">${+d.slice(8)}</span>${kg?`<span class="dkg">${nf(kg)} kg</span>`:''}<button class="add edit-only" data-act="novaBatidaDia" data-d="${d}" aria-label="Nova batida em ${fd(d)}">+</button></div>
+      ${bs.map(b => `<div class="chip ${b.status}" data-act="batida" data-id="${b.id}" draggable="${b.status==='planejada'&&canEdit()}" title="${esc(prodNome(b.produtoId))} · ${nf(b.kg)} kg">
+        <div class="t">${b.lote?`<span class="mono">${b.lote}</span> · `:''}${esc(prodNome(b.produtoId).replace(/ - ?1 ?KG$/i,''))}</div>
+        <div class="c"><span class="mono">${nf(kgBatida(b))} kg</span>${b.alocacoes?.length?' · '+clientesBatida(b):''}</div></div>`).join('')}
+    </div>`; }).join('')}</div></div></div>`;
+}
+function bindCalendario(){
+  let dragId = null;
+  $$('.chip[draggable="true"]').forEach(c => c.addEventListener('dragstart', e => { dragId = c.dataset.id; e.dataTransfer.setData('text/plain', dragId); e.dataTransfer.effectAllowed='move'; }));
+  $$('.day').forEach(d => {
+    d.addEventListener('dragover', e => { if (dragId){ e.preventDefault(); d.classList.add('over'); } });
+    d.addEventListener('dragleave', () => d.classList.remove('over'));
+    d.addEventListener('drop', async e => { e.preventDefault(); d.classList.remove('over'); const b = clone(S.batidas[dragId]); dragId=null;
+      if (!b || b.status!=='planejada' || b.data===d.dataset.day) return;
+      b.historico.push({em:agora(), por:quem(), txt:`Reprogramada de ${fd(b.data)} para ${fd(d.dataset.day)}`}); b.data = d.dataset.day;
+      await Store.put('batidas', b); toast(`Batida movida para ${fd(b.data)}`); });
+  });
+}
+
+/* ---------- LOTES E ESTOQUE ---------- */
+function vLotes(){
+  const ps = produtos();
+  const lotes = Object.values(S.batidas).filter(b => b.lote).sort((a,b)=>b.lote-a.lote);
+  return `
+  <div class="page-head"><div><h1>Produto acabado e lotes</h1><p>Estoque de produto acabado por lote (sobras de batidas). O sistema sempre sugere primeiro o lote mais antigo. Perdas e amostras são ajustadas dentro do lote.</p></div>
+    <div class="actions edit-only"><button class="btn" data-act="saldoInicial">Lançar saldo de lote antigo</button></div></div>
+  <div class="grid g-2" style="align-items:start">
+    <section class="panel"><div class="panel-h"><h2>Estoque de produto acabado</h2></div>
+      <div class="tbl-wrap"><table><thead><tr><th>Produto</th><th>Lotes com saldo</th><th class="r">Total (kg)</th><th class="r">Caixas</th></tr></thead><tbody>
+      ${ps.map(p => { const ls = ativas().filter(b => b.produtoId===p.id && b.status==='produzida' && saldoBatida(b)>0).sort(ordemFifo); const t = ls.reduce((s,b)=>s+saldoBatida(b),0);
+        return `<tr><td><span class="mono muted">${esc(p.codigo)}</span> ${esc(p.nome)}</td><td>${ls.map(b => `<span class="lotchip" data-act="batida" data-id="${b.id}" style="margin:2px"><span class="lote">${b.lote}</span><span class="mono">${nf(saldoBatida(b))}</span>${diasEntre(b.data,hoje())>90?'<span class="pill warn">antigo</span>':''}</span>`).join('')||'<span class="muted">—</span>'}</td><td class="r mono"><b>${nf(t)}</b></td><td class="r mono">${t?nf(Math.floor(t/10)):'—'}</td></tr>`; }).join('')}
+      </tbody></table></div></section>
+    <section class="panel"><div class="panel-h"><h2>Matéria-prima</h2><a href="#estoque" class="small">Abrir estoque →</a></div>
+      <div class="panel-b small">${(() => { const a = Object.values(S.materias).map(m => situacaoMP(m)); const c = a.filter(x=>x.st==='crit').length, r = a.filter(x=>x.st==='repor').length;
+        return c||r ? `<span class="pill crit">${c} comprar já</span> <span class="pill warn">${r} repor</span><div class="muted" style="margin-top:8px">Veja a sugestão de quantidade em Matéria-prima.</div>` : '<span class="pill ok">Tudo acima do ponto de reposição</span>'; })()}</div></section>
+  </div>
+  <section class="panel" style="margin-top:16px"><div class="panel-h"><h2>Livro de lotes</h2><span class="muted small">Próximo número: <span class="lote">${S.config.proximoLote}</span></span></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Lote</th><th>Produto</th><th>Data prod.</th><th class="r">kg</th><th>Pedidos</th><th class="r">Saldo</th><th>Situação</th></tr></thead><tbody>
+    ${lotes.length ? lotes.slice(0,80).map(b => `<tr class="click" data-act="batida" data-id="${b.id}"><td><span class="lote">${b.lote}</span></td><td>${esc(prodNome(b.produtoId))}</td><td class="mono">${fd(b.data)}</td><td class="r mono">${nf(kgBatida(b))}</td><td class="small mono">${(b.alocacoes||[]).map(a=>esc(S.pedidos[a.pedidoId]?.numero||'')).join(', ')||'—'}</td><td class="r mono">${b.status==='cancelada'?'—':nf(saldoBatida(b))}</td><td>${pillBat(b.status)}</td></tr>`).join('') : '<tr><td colspan="7" class="empty">Nenhum lote gerado ainda.</td></tr>'}
+    </tbody></table></div>${lotes.length>80?`<div class="panel-b small muted" style="border-top:1px solid var(--line)">Mostrando os 80 lotes mais recentes de ${lotes.length}. Para achar um lote antigo, busque pelo número em Pedidos.</div>`:''}</section>`;
+}
+function modalSaldoInicial(){
+  openModal(`
+    <div class="modal-h"><div><div class="eyebrow">Estoque</div><h2>Lançar saldo de lote antigo</h2></div><button class="btn ghost" data-act="close" aria-label="Fechar">✕</button></div>
+    <div class="modal-b"><div class="note small">Use para registrar o que já existe na prateleira antes de começar a usar o sistema (por exemplo, o lote 1404 de Ovinos & Caprinos). O número informado aqui não mexe na sequência automática.</div>
+      <div class="form">
+        <label class="f span2">Produto<select id="siProd">${produtos().map(p => `<option value="${p.id}">${esc(p.codigo)} · ${esc(p.nome)}</option>`).join('')}</select></label>
+        <label class="f">Nº do lote<input id="siLote" type="number" min="1" class="mono"></label>
+        <label class="f">Data de produção<input id="siData" type="date"></label>
+        <label class="f">Saldo atual (kg)<input id="siKg" type="number" min="1" step="1"></label>
+      </div><div class="err" id="siErr"></div></div>
+    <div class="modal-f"><button class="btn" data-act="close">Cancelar</button><button class="btn pri" data-act="salvarSaldo">Lançar saldo</button></div>`);
+}
+async function salvarSaldo(){
+  const lote = +$('#siLote').value, data = $('#siData').value, kg = +$('#siKg').value, pid = $('#siProd').value;
+  if (!lote || !data || !kg) return $('#siErr').textContent = 'Preencha lote, data e saldo.';
+  if (Object.values(S.batidas).some(b => b.lote===lote)) return $('#siErr').textContent = `O lote ${lote} já existe no sistema.`;
+  await Store.put('batidas', {id:uid(), produtoId:pid, data, kg, kgReal:kg, status:'produzida', lote, origem:'saldo', alocacoes:[], criadoEm:agora(), historico:[{em:agora(), por:quem(), txt:`Saldo inicial de ${kg} kg lançado`}]});
+  closeModal(); toast(`Lote ${lote} lançado no estoque`);
+}
+
+/* ---------- CADASTROS ---------- */
+function vCadastros(){
+  return `
+  <div class="page-head"><div><h1>Cadastros</h1><p>Produtos com a fórmula para ${CAPACIDADE} kg, matérias-primas e a numeração de lotes.</p></div></div>
+  <div class="tabs" style="margin-bottom:12px">${[['produtos','Produtos'],['materias','Matérias-primas'],['config','Configurações']].map(([k,t]) => `<button class="tab ${CAD_TAB===k?'on':''}" data-act="cadTab" data-k="${k}">${t}</button>`).join('')}</div>
+  ${CAD_TAB==='produtos' ? `
+    <section class="panel"><div class="panel-h"><h2>Produtos</h2><button class="btn sm pri edit-only" data-act="produto">+ Produto</button></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Código</th><th>Produto</th><th>Embalagem</th><th>Fórmula (${CAPACIDADE} kg)</th></tr></thead><tbody>
+    ${produtos().map(p => `<tr class="click" data-act="produto" data-id="${p.id}"><td class="mono"><b>${esc(p.codigo)}</b> ${p.codigoConfirmado===false?'<span class="pill warn">confirmar</span>':''}</td><td>${esc(p.nome)}</td><td class="small">1 kg · caixa ${p.unPorCaixa||10} un</td><td class="small">${p.formula?.length ? p.formula.map(f => `${esc(S.materias[f.mpId]?.nome||'?')} <span class="mono">${nf(f.kgPor500)}</span>`).join(' · ') : '<span class="muted">sem fórmula</span>'}</td></tr>`).join('')}
+    </tbody></table></div></section>
+    ${produtos().some(p=>p.codigoConfirmado===false)?'<div class="note warn small" style="margin-top:10px">Os códigos marcados com "confirmar" foram estimados. Confira com o código interno do sistema de vendas, porque é ele que liga o pedido ao produto.</div>':''}` : ''}
+  ${CAD_TAB==='materias' ? `
+    <section class="panel"><div class="panel-h"><h2>Matérias-primas e embalagens</h2><button class="btn sm pri edit-only" data-act="materia">+ Matéria-prima</button></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Nome</th><th>Unidade</th><th>Fornecedor</th><th class="r">Prazo entrega</th><th class="r">Compra em múltiplos de</th><th>Lote/validade</th><th>Usada em</th></tr></thead><tbody>
+    ${Object.values(S.materias).sort((a,b)=>a.nome.localeCompare(b.nome)).map(m => `<tr class="click" data-act="materia" data-id="${m.id}"><td>${esc(m.nome)} ${m.exemplo?'<span class="pill">exemplo</span>':''}</td><td>${esc(m.unidade)}</td><td class="small">${esc(m.fornecedor||'—')}</td><td class="r mono">${m.prazoEntrega||7} d</td><td class="r mono">${m.multiploCompra?nf(m.multiploCompra):'—'}</td><td>${m.controlaLote?'<span class="pill ok">controla</span>':'<span class="pill">não</span>'}</td><td class="small">${produtos().filter(p=>p.formula?.some(f=>f.mpId===m.id)).map(p=>esc(p.nome)).join(', ')||'—'}</td></tr>`).join('') || '<tr><td colspan="7" class="empty">Nenhuma matéria-prima cadastrada.</td></tr>'}
+    </tbody></table></div></section>` : ''}
+  ${CAD_TAB==='config' ? `
+    <section class="panel" style="max-width:520px"><div class="panel-h"><h2>Numeração de lotes</h2></div><div class="panel-b grid" style="gap:12px">
+      <div>Próximo lote a ser gerado: <span class="lote" style="font-size:16px">${S.config.proximoLote}</span></div>
+      <div class="small muted">A sequência é única para todos os produtos, e cada batida recebe um número. Ajuste apenas na implantação, para continuar do número em que vocês estão hoje.</div>
+      <div class="actions edit-only"><input id="cfgLote" type="number" min="1" value="${S.config.proximoLote}" style="width:120px"><button class="btn" data-act="salvarCfgLote">Ajustar sequência</button></div>
+      <div class="err" id="cfgErr"></div>
+    </div></section>
+    <section class="panel" style="max-width:520px;margin-top:16px"><div class="panel-h"><h2>Avisos por e-mail</h2><span class="pill ${EMAILJS_CONFIG?'ok':''}">${EMAILJS_CONFIG?'envio automático ativo':'envio automático desligado'}</span></div><div class="panel-b grid" style="gap:12px">
+      <label class="f">E-mail do diretor (recebe as solicitações de compra e os lembretes)<input id="cfgMailDir" type="email" value="${esc(S.config.emailDiretor||'')}" ${canEdit()?'':'disabled'}></label>
+      <label class="f">E-mail da produção (recebe as respostas do diretor)<input id="cfgMailProd" type="email" value="${esc(S.config.emailProducao||'')}" ${canEdit()?'':'disabled'}></label>
+      <div class="small muted">${EMAILJS_CONFIG ? 'Cada solicitação gera um e-mail ao diretor, e um lembrete é enviado a cada 24 h enquanto ela estiver sem resposta.' : 'Para o envio automático, configure o EmailJS (gratuito) conforme o LEIA-ME. Sem ele, os avisos aparecem no sistema e a solicitação tem um link para abrir o e-mail já escrito.'}</div>
+      <div class="actions edit-only"><button class="btn" data-act="salvarEmails">Salvar e-mails</button></div>
+    </div></section>` : ''}`;
+}
+function modalProduto(id){
+  const p = id ? clone(S.produtos[id]) : {codigo:'', nome:'', unPorCaixa:10, formula:[]};
+  const mps = Object.values(S.materias).sort((a,b)=>a.nome.localeCompare(b.nome));
+  const ro = !canEdit() ? 'disabled' : '';
+  const row = f => `<tr><td><select class="fm-mp" ${ro}><option value="">Selecione…</option>${mps.map(m=>`<option value="${m.id}" ${m.id===f.mpId?'selected':''}>${esc(m.nome)}</option>`).join('')}</select></td><td><input class="fm-kg" type="number" min="0" step="0.001" value="${f.kgPor500??''}" style="width:110px" ${ro}></td><td class="edit-only"><button class="btn sm ghost" data-act="rmItem" aria-label="Remover">✕</button></td></tr>`;
+  window._fmRow = row;
+  openModal(`
+    <div class="modal-h"><div><div class="eyebrow">Produto</div><h2>${id?esc(p.nome):'Novo produto'}</h2></div><button class="btn ghost" data-act="close" aria-label="Fechar">✕</button></div>
+    <div class="modal-b">
+      <div class="form">
+        <label class="f">Código interno<input id="prCod" value="${esc(p.codigo)}" class="mono" ${ro}></label>
+        <label class="f span2">Nome<input id="prNome" value="${esc(p.nome)}" ${ro}></label>
+        <label class="f">Unidades por caixa<input id="prCx" type="number" min="1" value="${p.unPorCaixa||10}" ${ro}></label>
+      </div>
+      <div><div class="eyebrow" style="margin-bottom:6px">Fórmula para uma batida de ${CAPACIDADE} kg</div>
+        <div class="note small" style="margin-bottom:8px">Informe a quantidade de cada componente para ${CAPACIDADE} kg. Em batidas menores, o sistema reduz na mesma proporção. Embalagens (sacos, caixas, rótulos) também podem entrar aqui.</div>
+        <div class="tbl-wrap"><table><thead><tr><th>Componente</th><th>Qtde p/ ${CAPACIDADE} kg</th><th></th></tr></thead><tbody id="fmRows">${(p.formula||[]).map(row).join('')}</tbody></table></div>
+        <div class="actions edit-only" style="margin-top:8px"><button class="btn sm" data-act="addFm">+ Componente</button><span class="small muted" id="fmTot"></span></div>
+      </div>
+      <div class="err" id="prErr"></div>
+    </div>
+    <div class="modal-f"><button class="btn" data-act="close">Fechar</button><button class="btn pri edit-only" data-act="salvarProduto" data-id="${id||''}">Salvar produto</button></div>`, 'wide');
+}
+async function salvarProduto(id){
+  const codigo = $('#prCod').value.trim(), nome = $('#prNome').value.trim();
+  if (!codigo || !nome) return $('#prErr').textContent = 'Informe código e nome.';
+  const dup = Object.values(S.produtos).find(p => String(p.codigo)===codigo && p.id!==id);
+  if (dup) return $('#prErr').textContent = `O código ${codigo} já é de ${dup.nome}.`;
+  const formula = $$('#fmRows tr').map(tr => ({mpId:$('.fm-mp',tr).value, kgPor500:+$('.fm-kg',tr).value||0})).filter(f => f.mpId && f.kgPor500>0);
+  const base = id ? S.produtos[id] : {id:uid(), ordem:99};
+  const codigoConfirmado = id && String(S.produtos[id].codigo)===codigo ? S.produtos[id].codigoConfirmado ?? true : true;
+  await Store.put('produtos', {...base, codigo, nome, unPorCaixa:+$('#prCx').value||10, formula, codigoConfirmado});
+  closeModal(); toast('Produto salvo');
+}
+function modalMateria(id){
+  const m = id ? S.materias[id] : {nome:'', unidade:'kg', controlaLote:false, prazoEntrega:7, diasSeguranca:5, diasCobertura:30};
+  const ro = !canEdit() ? 'disabled' : '';
+  openModal(`
+    <div class="modal-h"><div><div class="eyebrow">Matéria-prima</div><h2>${id?esc(m.nome):'Nova matéria-prima'}</h2></div><button class="btn ghost" data-act="close" aria-label="Fechar">✕</button></div>
+    <div class="modal-b"><div class="form">
+      <label class="f span2">Nome<input id="mpNome" value="${esc(m.nome)}" ${ro}></label>
+      <label class="f">Unidade<select id="mpUn" ${ro}>${['kg','g','L','un'].map(u=>`<option ${u===m.unidade?'selected':''}>${u}</option>`).join('')}</select></label>
+      <label class="f">Controlar lote e validade<select id="mpLote" ${ro}><option value="0" ${!m.controlaLote?'selected':''}>Não</option><option value="1" ${m.controlaLote?'selected':''}>Sim</option></select></label>
+      <label class="f span2">Fornecedor principal<input id="mpForn" value="${esc(m.fornecedor||'')}" ${ro}></label>
+      <label class="f">Prazo de entrega (dias)<input id="mpPrazo" type="number" min="1" value="${m.prazoEntrega??7}" ${ro}></label>
+      <label class="f">Compra em múltiplos de<input id="mpMult" type="number" min="0" step="any" value="${m.multiploCompra||''}" placeholder="ex.: 25 (saco)" ${ro}></label>
+      <label class="f">Estoque de segurança (dias)<input id="mpSeg" type="number" min="0" value="${m.diasSeguranca??5}" ${ro}></label>
+      <label class="f">Comprar para (dias de consumo)<input id="mpCob" type="number" min="1" value="${m.diasCobertura??30}" ${ro}></label>
+      <label class="f">Estoque mínimo fixo (opcional)<input id="mpMin" type="number" min="0" step="any" value="${m.estoqueMinimo||''}" placeholder="calculado" ${ro}></label>
+    </div>
+    <div class="note small">O ponto de reposição é calculado pelo consumo médio dos últimos 30 dias × (prazo de entrega + dias de segurança). Preencha o estoque mínimo fixo só se quiser substituir esse cálculo.</div><div class="err" id="mpErr"></div></div>
+    <div class="modal-f">${id?`<button class="btn danger edit-only" data-act="excluirMateria" data-id="${id}" style="margin-right:auto">Excluir</button>`:''}<button class="btn" data-act="close">Fechar</button><button class="btn pri edit-only" data-act="salvarMateria" data-id="${id||''}">Salvar</button></div>`);
+}
+
+/* ---------- ESTOQUE DE MATÉRIA-PRIMA ---------- */
+const movs = () => Object.values(S.movimentos||{});
+const mpUn = m => m?.unidade || 'kg';
+function saldoMP(id){ return movs().filter(m => m.mpId===id).reduce((s,m)=>s+m.qtd, 0); }
+function saldosLoteMP(id){
+  const L = {};
+  for (const m of movs().filter(m => m.mpId===id && m.loteFornecedor)){
+    const k = m.loteFornecedor; L[k] ||= {lote:k, saldo:0, validade:'', data:m.data};
+    L[k].saldo += m.qtd;
+    if (m.tipo==='entrada'){ if (m.validade) L[k].validade = m.validade; L[k].data = m.data; }
+  }
+  return Object.values(L).filter(x => x.saldo > 0.0005).sort((a,b) => (a.validade||'9999').localeCompare(b.validade||'9999') || a.data.localeCompare(b.data));
+}
+function comprometidoMP(id, excetoBatida){
+  let t = 0;
+  for (const b of ativas()) if ((b.status==='planejada' || b.status==='liberada') && b.id!==excetoBatida)
+    for (const c of consumoMP(b.produtoId, b.kg)) if (c.mp.id===id) t += c.kg;
+  return t;
+}
+function consumoMedioDia(id){
+  const ini = addDias(hoje(), -30);
+  return movs().filter(m => m.mpId===id && m.tipo==='saida' && m.data>=ini).reduce((s,m)=>s-m.qtd, 0) / 30;
+}
+function situacaoMP(m){
+  const saldo = saldoMP(m.id), comp = comprometidoMP(m.id), cmd = consumoMedioDia(m.id);
+  const lead = +m.prazoEntrega || 7, seg = m.diasSeguranca ?? 5, cob = m.diasCobertura ?? 30;
+  const disp = saldo - comp;
+  const ponto = +m.estoqueMinimo > 0 ? +m.estoqueMinimo : Math.max(cmd*(lead+seg), comp);
+  const dur = cmd > 0 ? disp/cmd : Infinity;
+  let st;
+  if (cmd===0 && comp===0) st = saldo < 0 ? 'crit' : 'semuso';
+  else if (disp < 0 || dur < lead) st = 'crit';
+  else if (disp <= ponto) st = 'repor';
+  else st = 'ok';
+  let sug = 0;
+  const emCompra = comprasAbertasMP(m.id).reduce((t,c) => t + faltaReceber(c), 0);
+  if (st==='crit' || st==='repor'){
+    sug = Math.max(comp, cmd*lead) + cmd*(seg+cob) - saldo;
+    if (+m.estoqueMinimo > 0) sug = Math.max(sug, +m.estoqueMinimo*1.5 - saldo);
+    sug = Math.max(0, sug - emCompra);
+    if (sug > 0) sug = +m.multiploCompra > 0 ? Math.ceil(sug / +m.multiploCompra) * +m.multiploCompra : Math.ceil(sug);
+    if (sug === 0 && emCompra > 0) st = 'comprando';
+  }
+  return {saldo, comp, disp, cmd, ponto, dur, st, sug, lead, seg, cob, emCompra};
+}
+const ST_MP = {crit:['Comprar já','crit'], repor:['Repor','warn'], comprando:['Em compra','info'], ok:['OK','ok'], semuso:['Sem consumo','']};
+const pillMP = s => `<span class="pill ${ST_MP[s][1]}">${ST_MP[s][0]}</span>`;
+function vencimentos(dias){
+  const lim = addDias(hoje(), dias), out = [];
+  for (const m of Object.values(S.materias)) if (m.controlaLote)
+    for (const l of saldosLoteMP(m.id)) if (l.validade && l.validade <= lim) out.push({m, ...l});
+  return out.sort((a,b) => a.validade.localeCompare(b.validade));
+}
+function calcBaixa(b, kg){
+  const out = [];
+  for (const c of consumoMP(b.produtoId, kg)){
+    let rest = Math.round(c.kg*1000)/1000;
+    if (c.mp.controlaLote) for (const l of saldosLoteMP(c.mp.id)){ if (rest <= 0) break; const q = Math.min(rest, l.saldo); out.push({mpId:c.mp.id, qtd:q, loteFornecedor:l.lote}); rest -= q; }
+    if (rest > 0.0005) out.push({mpId:c.mp.id, qtd:rest, loteFornecedor:''});
+  }
+  return out;
+}
+function tabelaNecessidadeMP(prodId, kg, excetoBatida){
+  const mp = consumoMP(prodId, kg);
+  if (!mp.length) return `<div class="note small">Cadastre a fórmula deste produto para ver a matéria-prima necessária.</div>`;
+  return `<div class="ledger">${mp.map(c => { const disp = saldoMP(c.mp.id) - comprometidoMP(c.mp.id, excetoBatida), falta = c.kg - disp;
+    return `<div class="l"><span class="q">${nf(c.kg)} ${esc(mpUn(c.mp))}</span><span>${esc(c.mp.nome)} ${falta>0.0005?`<b style="color:var(--crit)">· falta ${nf(falta)}</b>`:`<span class="muted">· disp. ${nf(disp)}</span>`}</span></div>`; }).join('')}</div>`;
+}
+function blocoMPBatida(b){
+  if (b.origem==='saldo') return '';
+  if (b.status==='produzida'){
+    if (!b.consumo?.length) return '';
+    return `<div><div class="eyebrow" style="margin-bottom:6px">Matéria-prima baixada do estoque</div><div class="ledger">${b.consumo.map(c => { const m = S.materias[c.mpId];
+      return `<div class="l"><span class="q">${nf(c.qtd)} ${esc(mpUn(m))}</span><span>${esc(m?.nome||'?')}${c.loteFornecedor?` <span class="muted">· lote forn. ${esc(c.loteFornecedor)}</span>`:''}</span></div>`; }).join('')}</div></div>`;
+  }
+  if (b.status==='cancelada') return '';
+  return `<div><div class="eyebrow" style="margin-bottom:6px">Matéria-prima necessária${b.status==='liberada'?' (será baixada ao confirmar a produção)':''}</div>${tabelaNecessidadeMP(b.produtoId, b.kg, b.id)}</div>`;
+}
+function blocoAjuste(b){
+  if (!canEdit()) return '';
+  return `<details><summary class="small muted" style="cursor:pointer">Ajustar saldo deste lote (perda, amostra, inventário)</summary>
+    <div class="form" style="margin-top:8px">
+      <label class="f">Tipo<select id="ajTipo"><option value="-1">Saída (perda, amostra, avaria)</option><option value="1">Entrada (sobra encontrada no inventário)</option></select></label>
+      <label class="f">Quantidade (kg)<input id="ajQtd" type="number" min="1" step="1"></label>
+      <label class="f span2">Motivo<input id="ajMot" placeholder="Ex.: 2 kg de amostra para o cliente X"></label>
+    </div><div class="actions" style="margin-top:8px"><button class="btn sm" data-act="ajusteAcab" data-id="${b.id}">Registrar ajuste</button></div></details>`;
+}
+
+let EST_FILTRO = 'todos';
+function vEstoque(){
+  const ms = Object.values(S.materias).sort((a,b)=>a.nome.localeCompare(b.nome)).map(m => ({m, s:situacaoMP(m)}));
+  const n = k => ms.filter(x => x.s.st===k).length;
+  const venc = vencimentos(60);
+  const lista = ms.filter(x => EST_FILTRO==='todos' || (EST_FILTRO==='comprar' ? (x.s.st==='crit'||x.s.st==='repor') : x.s.st===EST_FILTRO))
+                  .sort((a,b) => ['crit','repor','comprando','ok','semuso'].indexOf(a.s.st) - ['crit','repor','comprando','ok','semuso'].indexOf(b.s.st));
+  const ult = movs().sort((a,b) => (b.em||'').localeCompare(a.em||'') || b.data.localeCompare(a.data)).slice(0,12);
+  return `
+  <div class="page-head"><div><h1>Estoque de matéria-prima</h1><p>O saldo sobe com as entradas de compra e desce sozinho a cada produção confirmada, pela fórmula do produto. A sugestão de compra considera o consumo, o prazo do fornecedor e as batidas já programadas.</p></div>
+    <div class="actions"><button class="btn edit-only" data-act="solicitarVarios">Solicitar compras sugeridas</button><button class="btn edit-only" data-act="ajusteMP">Inventário / ajuste</button><button class="btn pri edit-only" data-act="entradaMP">Registrar entrada</button></div></div>
+  <div class="grid g-kpi adv" style="margin-bottom:16px">
+    <div class="panel kpi"><div class="eyebrow">Comprar já</div><div class="v" style="color:${n('crit')?'var(--crit)':'inherit'}">${n('crit')}</div><div class="s">acaba antes de a compra chegar</div></div>
+    <div class="panel kpi"><div class="eyebrow">Repor</div><div class="v" style="color:${n('repor')?'var(--warn)':'inherit'}">${n('repor')}</div><div class="s">abaixo do ponto de reposição</div></div>
+    <div class="panel kpi"><div class="eyebrow">Itens OK</div><div class="v">${n('ok')}</div><div class="s">de ${ms.length} cadastrados</div></div>
+    <div class="panel kpi"><div class="eyebrow">Validade em 60 dias</div><div class="v" style="color:${venc.length?'var(--warn)':'inherit'}">${venc.length}</div><div class="s">lotes de fornecedor</div></div>
+  </div>
+  <div class="tabs" style="margin-bottom:12px">${[['todos','Todos'],['comprar','Precisa comprar'],['comprando','Em compra'],['ok','OK']].map(([k,t]) => `<button class="tab ${EST_FILTRO===k?'on':''}" data-act="estFiltro" data-k="${k}">${t}</button>`).join('')}</div>
+  <section class="panel"><div class="tbl-wrap"><table>
+    <thead><tr><th>Matéria-prima</th><th class="r">Tem em estoque</th><th class="r adv">Comprometido</th><th class="r adv">Disponível</th><th class="r adv">Consumo/dia</th><th>Dura</th><th class="r adv">Mínimo sugerido</th><th class="r">Compra sugerida</th><th>Situação</th></tr></thead>
+    <tbody>${lista.length ? lista.map(({m,s}) => { const u = esc(mpUn(m)); const pct = s.ponto>0 ? Math.max(0, Math.min(100, s.disp/(s.ponto*2)*100)) : 100;
+      return `<tr class="click" data-act="mpDet" data-id="${m.id}">
+      <td style="min-width:150px"><b>${esc(m.nome)}</b><div class="small muted">entrega em ${s.lead} dias</div></td>
+      <td class="r mono" ${s.saldo<0?'style="color:var(--crit)"':''}>${nf(s.saldo)} ${u}</td><td class="r mono muted adv">${s.comp?nf(Math.round(s.comp)):'—'}</td><td class="r mono adv"><b>${nf(Math.round(s.disp))}</b></td>
+      <td class="r mono adv">${s.cmd?nf(s.cmd):'—'}</td>
+      <td><div class="actions" style="gap:8px;flex-wrap:nowrap"><div class="bar-mini ${s.st}"><i style="width:${pct}%"></i></div><span class="mono small" style="white-space:nowrap">${s.dur===Infinity?'—':Math.max(0,Math.floor(s.dur))+' d'}</span></div></td>
+      <td class="r mono adv">${s.ponto?nf(Math.ceil(s.ponto)):'—'}</td>
+      <td class="r">${celulaCompra(m, s, u)}</td><td>${pillMP(s.st)}</td></tr>`; }).join('') : `<tr><td colspan="9" class="empty">${Object.keys(S.materias).length?'Nenhum item neste filtro.':'Cadastre as matérias-primas em Cadastros para começar.'}</td></tr>`}
+    </tbody></table></div>
+    <div class="panel-b small muted adv" style="border-top:1px solid var(--line)"><b>Como as sugestões são calculadas:</b> o <b>mínimo sugerido</b> é o consumo médio dos últimos 30 dias × (prazo do fornecedor + dias de segurança). A <b>compra sugerida</b> cobre o consumo até a entrega (ou as batidas programadas, o que for maior), mais os dias de segurança e de cobertura, menos o saldo e menos o que já está em compra. O valor é arredondado para o múltiplo do fornecedor (ex.: sacos de 25 kg). As duas são sugestões: a quantidade pode ser alterada ao solicitar.</div></section>
+  <div class="grid g-2" style="margin-top:16px;align-items:start">
+    <section class="panel adv"><div class="panel-h"><h2>Últimas movimentações</h2></div><div class="tbl-wrap"><table><tbody>
+      ${ult.length ? ult.map(linhaMov).join('') : '<tr><td class="empty">Nenhuma movimentação ainda.</td></tr>'}
+    </tbody></table></div></section>
+    <section class="panel"><div class="panel-h"><h2>Validades próximas</h2><span class="muted small">próximos 60 dias</span></div><div class="tbl-wrap"><table><tbody>
+      ${venc.length ? venc.map(v => { const d = diasEntre(hoje(), v.validade); return `<tr class="click" data-act="mpDet" data-id="${v.m.id}"><td>${esc(v.m.nome)}<div class="small muted mono">lote ${esc(v.lote)}</div></td><td class="mono">${fd(v.validade)}</td><td class="r mono">${nf(v.saldo)} ${esc(mpUn(v.m))}</td><td>${d<0?'<span class="pill crit">vencido</span>':`<span class="pill ${d<=30?'crit':'warn'}">${d} dias</span>`}</td></tr>`; }).join('') : '<tr><td class="empty">Nenhum lote vencendo nos próximos 60 dias.</td></tr>'}
+    </tbody></table></div></section>
+  </div>`;
+}
+const TIPO_MOV = {entrada:['Entrada','ok'], saida:['Baixa produção',''], ajuste:['Ajuste','warn']};
+function linhaMov(m){
+  const mp = S.materias[m.mpId], b = m.batidaId ? S.batidas[m.batidaId] : null;
+  const ref = m.tipo==='entrada' ? [m.nf, m.fornecedor].filter(Boolean).join(' · ') : m.tipo==='saida' ? (b ? `lote ${b.lote||'?'} · ${curto(prodNome(b.produtoId))}` : 'produção') : (m.motivo||'');
+  return `<tr><td class="mono small">${fd(m.data).slice(0,5)}</td><td>${esc(mp?.nome||'?')}<div class="small muted">${esc(ref)}${m.loteFornecedor?` · lote forn. ${esc(m.loteFornecedor)}`:''}</div></td><td><span class="pill ${TIPO_MOV[m.tipo][1]}">${TIPO_MOV[m.tipo][0]}</span></td><td class="r mono" style="color:${m.qtd<0?'var(--crit)':'var(--accent)'}">${m.qtd<0?'−':'+'}${nf(Math.abs(m.qtd))}</td></tr>`;
+}
+function modalMPDet(id){
+  const m = S.materias[id]; if (!m) return;
+  const s = situacaoMP(m), u = esc(mpUn(m));
+  const lista = movs().filter(x => x.mpId===id).sort((a,b) => a.data.localeCompare(b.data) || (a.em||'').localeCompare(b.em||''));
+  let acc = 0; const ext = lista.map(x => ({x, saldo: acc += x.qtd})).reverse();
+  const lotes = m.controlaLote ? saldosLoteMP(id) : [];
+  openModal(`
+    <div class="modal-h"><div><div class="eyebrow">Matéria-prima${m.fornecedor?' · '+esc(m.fornecedor):''}</div><h2>${esc(m.nome)} ${pillMP(s.st)}</h2></div><button class="btn ghost" data-act="close" aria-label="Fechar">✕</button></div>
+    <div class="modal-b">
+      <div class="metrics">
+        <div class="metric"><b>${nf(s.saldo)} ${u}</b><span>saldo</span></div>
+        <div class="metric"><b>${nf(s.comp)}</b><span>comprometido</span></div>
+        <div class="metric"><b>${nf(s.cmd)}</b><span>consumo/dia</span></div>
+        <div class="metric"><b>${s.dur===Infinity?'—':Math.max(0,Math.floor(s.dur))+' dias'}</b><span>dura</span></div>
+        <div class="metric"><b>${s.lead} dias</b><span>prazo entrega</span></div>
+        <div class="metric ${s.sug?'crit':'ok'}"><b>${s.sug?nf(s.sug)+' '+u:'—'}</b><span>compra sugerida</span></div>
+      </div>
+      ${comprasAbertasMP(id).length?`<div class="note small">Compra em andamento: ${comprasAbertasMP(id).map(c => `<a href="#" data-act="compra" data-id="${c.id}">${scNum(c)}</a> ${nf(faltaReceber(c))} ${esc(mpUn(m))} · ${ST_SC[c.status][0].toLowerCase()}${c.previsao?' · previsão '+fd(c.previsao):''}`).join('; ')}</div>`:''}
+      ${m.controlaLote ? `<div><div class="eyebrow" style="margin-bottom:6px">Lotes do fornecedor em estoque (o mais antigo é usado primeiro)</div>
+        <div class="tbl-wrap"><table><thead><tr><th>Lote forn.</th><th>Recebido</th><th>Validade</th><th class="r">Saldo</th></tr></thead><tbody>
+        ${lotes.length ? lotes.map(l => `<tr><td class="mono">${esc(l.lote)}</td><td class="mono">${fd(l.data)}</td><td class="mono">${l.validade?fd(l.validade):'—'} ${l.validade && diasEntre(hoje(),l.validade)<=60?`<span class="pill ${diasEntre(hoje(),l.validade)<=30?'crit':'warn'}">${diasEntre(hoje(),l.validade)} d</span>`:''}</td><td class="r mono">${nf(l.saldo)} ${u}</td></tr>`).join('') : '<tr><td colspan="4" class="empty">Sem lotes com saldo.</td></tr>'}
+        </tbody></table></div></div>` : ''}
+      <div><div class="eyebrow" style="margin-bottom:6px">Extrato</div>
+        <div class="tbl-wrap" style="max-height:320px;overflow-y:auto"><table><thead><tr><th>Data</th><th>Movimento</th><th>Referência</th><th class="r">Qtde</th><th class="r">Saldo</th></tr></thead><tbody>
+        ${ext.length ? ext.map(({x,saldo}) => { const b = x.batidaId ? S.batidas[x.batidaId] : null;
+          const ref = x.tipo==='entrada' ? [x.nf, x.fornecedor].filter(Boolean).join(' · ') : x.tipo==='saida' ? (b?`Lote ${b.lote||'?'} · ${curto(prodNome(b.produtoId))}`:'Produção') : (x.motivo||'');
+          return `<tr><td class="mono">${fd(x.data)}</td><td><span class="pill ${TIPO_MOV[x.tipo][1]}">${TIPO_MOV[x.tipo][0]}</span></td><td class="small">${esc(ref)}${x.loteFornecedor?` <span class="muted mono">· ${esc(x.loteFornecedor)}</span>`:''}<div class="muted" style="font-size:11px">${esc(x.por||'')}</div></td><td class="r mono" style="color:${x.qtd<0?'var(--crit)':'var(--accent)'}">${x.qtd<0?'−':'+'}${nf(Math.abs(x.qtd))}</td><td class="r mono">${nf(saldo)}</td></tr>`; }).join('') : '<tr><td colspan="5" class="empty">Sem movimentações.</td></tr>'}
+        </tbody></table></div></div>
+    </div>
+    <div class="modal-f"><button class="btn" data-act="materia" data-id="${id}" style="margin-right:auto">Parâmetros do item</button><button class="btn edit-only" data-act="ajusteMP" data-id="${id}">Inventário / ajuste</button><button class="btn edit-only" data-act="entradaMP" data-id="${id}">Registrar entrada</button><button class="btn pri edit-only" data-act="solicitar" data-id="${id}">Solicitar compra</button></div>`, 'wide');
+}
+function selMP(id, sel){ return `<select id="${id}"><option value="">Selecione…</option>${Object.values(S.materias).sort((a,b)=>a.nome.localeCompare(b.nome)).map(m => `<option value="${m.id}" ${m.id===sel?'selected':''}>${esc(m.nome)} (${esc(mpUn(m))})</option>`).join('')}</select>`; }
+function modalEntrada(mpId, compraId){
+  openModal(`
+    <div class="modal-h"><div><div class="eyebrow">Estoque · entrada</div><h2>Registrar recebimento de compra</h2></div><button class="btn ghost" data-act="close" aria-label="Fechar">✕</button></div>
+    <div class="modal-b"><div class="form">
+      <label class="f span2">Matéria-prima${selMP('enMp', mpId)}</label>
+      <label class="f">Quantidade recebida<input id="enQtd" type="number" min="0" step="any"></label>
+      <label class="f">Data do recebimento<input id="enData" type="date" value="${hoje()}"></label>
+      <label class="f">Nota fiscal<input id="enNf" placeholder="NF 12345"></label>
+      <label class="f">Fornecedor<input id="enForn"></label>
+      <label class="f" id="enLoteW">Lote do fornecedor<input id="enLote" class="mono"></label>
+      <label class="f" id="enValW">Validade<input id="enVal" type="date"></label>
+      <label class="f span2" id="enScW">Solicitação de compra<select id="enSc"></select></label>
+    </div><div class="note small" id="enNote"></div><div class="err" id="enErr"></div></div>
+    <div class="modal-f"><button class="btn" data-act="close">Cancelar</button><button class="btn pri" data-act="salvarEntrada">Registrar entrada</button></div>`);
+  const upd = () => { const m = S.materias[$('#enMp').value];
+    const ab = m ? comprasAbertasMP(m.id) : [], sel = ab.find(c => c.id===compraId) || ab.find(c => c.status==='comprada');
+    $('#enScW').hidden = !ab.length;
+    $('#enSc').innerHTML = `<option value="">Não vincular</option>` + ab.map(c => `<option value="${c.id}" ${c===sel?'selected':''}>${scNum(c)} · falta receber ${nf(faltaReceber(c))} ${esc(mpUn(m))} · ${ST_SC[c.status][0]}</option>`).join('');
+    if (sel){ $('#enQtd').value ||= faltaReceber(sel); $('#enForn').value ||= sel.fornecedor || ''; }
+    $('#enForn').value ||= m?.fornecedor || '';
+    $('#enNote').textContent = m ? (m.controlaLote ? 'Este item controla lote e validade: os dois campos são obrigatórios.' : 'Este item não controla lote. Lote e validade são opcionais.') : '';
+    $('#enNote').hidden = !m; };
+  $('#enMp').addEventListener('change', () => { $('#enForn').value = ''; upd(); }); upd();
+}
+async function salvarEntrada(){
+  const m = S.materias[$('#enMp').value], q = +$('#enQtd').value, err = $('#enErr');
+  if (!m) return err.textContent = 'Escolha a matéria-prima.';
+  if (!(q>0)) return err.textContent = 'Informe a quantidade recebida.';
+  const lote = $('#enLote').value.trim(), val = $('#enVal').value;
+  if (m.controlaLote && (!lote || !val)) return err.textContent = 'Informe o lote do fornecedor e a validade.';
+  const mv = {id:uid(), mpId:m.id, tipo:'entrada', qtd:q, data:$('#enData').value||hoje(), origem:'compra', nf:$('#enNf').value.trim(), fornecedor:$('#enForn').value.trim(), loteFornecedor:lote, validade:val, por:quem(), em:agora()};
+  const lista = [['movimentos', mv]];
+  const scId = $('#enScW').hidden ? '' : $('#enSc').value;
+  let msg = '';
+  if (scId){ const c = clone(S.compras[scId]); mv.compraId = scId; c.qtdRecebida = (c.qtdRecebida||0) + q;
+    const total = c.qtdRecebida >= c.qtd*0.98;
+    if (total){ c.status = 'recebida'; c.encerradoEm = agora(); }
+    c.historico.push({em:agora(), por:quem(), txt:`Recebido ${nf(q)} ${mpUn(m)}${mv.nf?' ('+mv.nf+')':''}${total?' · solicitação concluída':' · recebimento parcial'}`});
+    lista.push(['compras', c]); msg = total ? ` · ${scNum(c)} concluída` : ` · ${scNum(c)} recebida em parte`; }
+  await Store.putMany(lista);
+  closeModal(); toast(`Entrada de ${nf(q)} ${mpUn(m)} de ${m.nome} registrada${msg}`);
+}
+function modalAjusteMP(mpId){
+  openModal(`
+    <div class="modal-h"><div><div class="eyebrow">Estoque · ajuste</div><h2>Inventário ou ajuste de saldo</h2></div><button class="btn ghost" data-act="close" aria-label="Fechar">✕</button></div>
+    <div class="modal-b"><div class="form">
+      <label class="f span2">Matéria-prima${selMP('ajMp', mpId)}</label>
+      <label class="f">Tipo<select id="ajMpTipo"><option value="inv">Inventário (informar o que foi contado)</option><option value="perda">Perda / descarte / vencido</option></select></label>
+      <label class="f" id="ajLoteW">Lote do fornecedor<select id="ajLote"></select></label>
+      <label class="f" id="ajQLbl">Quantidade contada<input id="ajMpQtd" type="number" min="0" step="any"></label>
+      <label class="f span2">Motivo<input id="ajMpMot" placeholder="Ex.: inventário mensal, saco rasgado"></label>
+    </div><div class="note small" id="ajInfo"></div><div class="err" id="ajErr"></div></div>
+    <div class="modal-f"><button class="btn" data-act="close">Cancelar</button><button class="btn pri" data-act="salvarAjusteMP">Registrar ajuste</button></div>`);
+  const upd = () => { const m = S.materias[$('#ajMp').value], inv = $('#ajMpTipo').value==='inv';
+    $('#ajQLbl').firstChild.textContent = inv ? 'Quantidade contada' : 'Quantidade perdida';
+    const ls = m?.controlaLote ? saldosLoteMP(m.id) : [];
+    $('#ajLoteW').hidden = !ls.length;
+    if (ls.length && $('#ajLote').dataset.mp !== m.id){ $('#ajLote').innerHTML = `<option value="">Todos os lotes</option>` + ls.map(l => `<option value="${esc(l.lote)}">${esc(l.lote)} · ${nf(l.saldo)}</option>`).join(''); $('#ajLote').dataset.mp = m.id; }
+    const lt = $('#ajLote').value, base = !m ? 0 : lt ? (ls.find(l=>l.lote===lt)?.saldo||0) : saldoMP(m.id);
+    const q = +$('#ajMpQtd').value;
+    $('#ajInfo').textContent = !m ? '' : `Saldo no sistema${lt?' deste lote':''}: ${nf(base)} ${mpUn(m)}.` + ($('#ajMpQtd').value!=='' ? (inv ? ` Diferença: ${q-base>=0?'+':'−'}${nf(Math.abs(q-base))} ${mpUn(m)}.` : ` Saldo após o ajuste: ${nf(base-q)} ${mpUn(m)}.`) : '');
+    $('#ajInfo').hidden = !m; };
+  $('#modal').addEventListener('input', upd); $('#modal').addEventListener('change', e => { if (e.target.id==='ajMp') $('#ajLote').dataset.mp=''; upd(); }); upd();
+}
+async function salvarAjusteMP(){
+  const m = S.materias[$('#ajMp').value], err = $('#ajErr');
+  if (!m) return err.textContent = 'Escolha a matéria-prima.';
+  if ($('#ajMpQtd').value==='') return err.textContent = 'Informe a quantidade.';
+  const motivo = $('#ajMpMot').value.trim(); if (!motivo) return err.textContent = 'Informe o motivo do ajuste.';
+  const inv = $('#ajMpTipo').value==='inv', q = +$('#ajMpQtd').value, lt = $('#ajLoteW').hidden ? '' : $('#ajLote').value;
+  const base = lt ? (saldosLoteMP(m.id).find(l=>l.lote===lt)?.saldo||0) : saldoMP(m.id);
+  const dif = inv ? q - base : -q;
+  if (Math.abs(dif) < 0.0005) { closeModal(); return toast('O saldo confere. Nenhum ajuste necessário.'); }
+  await Store.put('movimentos', {id:uid(), mpId:m.id, tipo:'ajuste', qtd:dif, data:hoje(), origem: inv?'inventario':'perda', motivo: (inv?'Inventário: ':'Perda: ')+motivo, loteFornecedor:lt, por:quem(), em:agora()});
+  closeModal(); toast(`Ajuste de ${dif>0?'+':'−'}${nf(Math.abs(dif))} ${mpUn(m)} registrado`);
+}
+function modalListaCompras(){
+  const itens = Object.values(S.materias).map(m => ({m, s:situacaoMP(m)})).filter(x => x.s.sug>0).sort((a,b) => (a.s.st==='crit'?0:1)-(b.s.st==='crit'?0:1) || a.m.nome.localeCompare(b.m.nome));
+  const txt = [`Sugestão de compra de matéria-prima · ${fd(hoje())}`, ''].concat(itens.map(({m,s}) => `${s.st==='crit'?'[URGENTE] ':''}${m.nome}: ${nf(s.sug)} ${mpUn(m)} (saldo ${nf(s.saldo)}, dura ${s.dur===Infinity?'—':Math.max(0,Math.floor(s.dur))+' dias'}, entrega em ${s.lead} dias${m.fornecedor?', '+m.fornecedor:''})`)).join('\n');
+  openModal(`
+    <div class="modal-h"><div><div class="eyebrow">Estoque</div><h2>Lista de compras sugerida</h2></div><button class="btn ghost" data-act="close" aria-label="Fechar">✕</button></div>
+    <div class="modal-b">${itens.length ? `<div class="small muted">Copie e envie ao diretor. Na Fase 3, isso vira uma solicitação de compra dentro do sistema, com prazo e andamento.</div><textarea id="txtCom" rows="${itens.length+3}" readonly class="mono" style="width:100%;font-size:12.5px">${esc(txt)}</textarea>` : '<div class="empty">Nenhum item precisa de compra agora.</div>'}</div>
+    <div class="modal-f"><button class="btn" data-act="close">Fechar</button>${itens.length?'<button class="btn pri" data-act="copiarCom">Copiar lista</button>':''}</div>`);
+}
+
+/* ---------- IMPORTAÇÃO DE PDF DO PEDIDO ---------- */
+const PDFJS_BASE = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+let PDFJS_P = null;
+function loadPdfJs(){
+  return PDFJS_P ||= (async () => {
+    await loadScript(PDFJS_BASE+'pdf.min.js');
+    await loadScript(PDFJS_BASE+'pdf.worker.min.js');   // roda o leitor na própria página
+    pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_BASE+'pdf.worker.min.js';
+  })().catch(e => { PDFJS_P = null; throw e; });
+}
+async function textoPdf(file){
+  await loadPdfJs();
+  const pdf = await pdfjsLib.getDocument({data: new Uint8Array(await file.arrayBuffer())}).promise;
+  const out = [];
+  for (let n=1; n<=pdf.numPages; n++){
+    const tc = await (await pdf.getPage(n)).getTextContent();
+    const its = tc.items.filter(i => i.str && i.str.trim()).map(i => ({s:i.str, x:i.transform[4], y:i.transform[5], w:i.width, h:Math.abs(i.transform[3])||10}));
+    const rows = [];
+    its.sort((a,b) => b.y-a.y || a.x-b.x).forEach(it => { const r = rows.find(r => Math.abs(r.y-it.y) < Math.max(2.5, it.h*0.4)); if (r) r.items.push(it); else rows.push({y:it.y, items:[it]}); });
+    rows.sort((a,b) => b.y-a.y).forEach(r => {
+      r.items.sort((a,b) => a.x-b.x); let line = '', end = null;
+      for (const it of r.items){ if (end!==null){ const gap = it.x-end; line += gap > 6 ? '   ' : gap > 0.8 ? ' ' : ''; } line += it.s; end = it.x + it.w; }
+      out.push(line.replace(/\s+$/,''));
+    });
+  }
+  return out;
+}
+const UFS = 'AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' ');
+const br2iso = s => { const m = String(s).match(/(\d{2})\/(\d{2})\/(\d{4})/); return m ? `${m[3]}-${m[2]}-${m[1]}` : ''; };
+const numBR = s => +String(s).replace(/\./g,'').replace(',','.');
+const normNome = s => String(s||'').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/-?\s*1\s?KG\b/g,'').replace(/[^A-Z0-9]/g,'');
+function parsePedido(lines){
+  const T = lines.join('\n'), r = {numero:'', emissao:'', vendedor:'', cliente:'', cidade:'', uf:'', obs:'', itens:[], avisos:[]};
+  let m = T.match(/N[úu]mero:?[^\n]*\n[^\S\n]*(\d{6,})[^\S\n]+(\d{2}\/\d{2}\/\d{4})/i);
+  if (m){ r.numero = m[1]; r.emissao = br2iso(m[2]); }
+  if (!r.numero){ m = T.match(/N[úu]mero:?[^\S\n]*(\d{6,})/i); if (m) r.numero = m[1]; }
+  if (!r.emissao){ m = T.match(/Emi(?:tido em|ss[ãa]o):?\s*(\d{2}\/\d{2}\/\d{4})/i); if (m) r.emissao = br2iso(m[1]); }
+  m = T.match(/Vendedor:?[^\S\n]*([^\n]+)/i); if (m) r.vendedor = m[1].split(/\s{2,}/)[0].trim();
+  m = T.match(/Cliente:?[^\S\n]*([^\n]+)/i); if (m) r.cliente = m[1].split(/\s{2,}/)[0].replace(/\s+\d{9,}.*$/,'').trim();
+  m = T.match(/Cep:?[^\S\n]*[\d.\-]{8,10}[^\S\n]+([^\n]+)/i); if (m) r.cidade = m[1].split(/\s{2,}|Cel:|Fone:|Contato:/i)[0].trim();
+  const iC = T.search(/Cliente:/i), iD = T.search(/Descri[çc][ãa]o/i);
+  const bloco = iC>=0 ? T.slice(iC, iD>iC ? iD : undefined) : '';
+  const ufs = [...bloco.matchAll(/(?:^|\s)([A-Z]{2})(?=\s|$)/gm)].map(x => x[1]).filter(u => UFS.includes(u));
+  if (ufs.length) r.uf = ufs[ufs.length-1];
+  m = T.match(/OBS:?[^\S\n]*([^\n]*)/i); if (m) r.obs = m[1].trim();
+  for (const ln of lines){
+    const x = ln.match(/^\s*(\d{1,4})\s+(\d{1,6})\s+(.+?)\s+(KG|UN|CX|PC|SC|LT|L)\s+([\d.]+(?:,\d+)?)(?=\s|$)/i);
+    if (!x) continue;
+    const cod = x[2], desc = x[3].trim(), qtd = numBR(x[5]);
+    let p = prodPorCodigo(cod);
+    const pn = Object.values(S.produtos).find(pp => normNome(pp.nome) === normNome(desc));
+    if (p && pn && p.id !== pn.id) r.avisos.push(`Código ${cod} no PDF é "${desc}", mas no cadastro o código ${cod} é "${p.nome}". Confira o código interno em Cadastros.`);
+    if (!p && pn){ p = pn; r.avisos.push(`"${desc}" veio com o código ${cod}, que não está no cadastro. Associei pelo nome.`); }
+    if (!p) r.avisos.push(`Produto não encontrado no cadastro: código ${cod}, "${desc}".`);
+    if (x[4].toUpperCase()!=='KG') r.avisos.push(`"${desc}" veio na unidade ${x[4]}. Confira a quantidade em kg.`);
+    r.itens.push({codigo:cod, descricao:desc, qtd, produtoId: p?.id || ''});
+  }
+  if (!r.numero) r.avisos.unshift('Não encontrei o número do pedido.');
+  if (!r.cliente) r.avisos.push('Não encontrei o cliente.');
+  if (!r.itens.length) r.avisos.push('Não encontrei itens no pedido.');
+  return r;
+}
+function statusImp(r){
+  if (r.lendo) return ['Lendo…',''];
+  if (r.erro) return ['Não foi possível ler','crit'];
+  if (r.lancado) return ['Lançado','ok'];
+  if (r.numero && S.pedidos[r.numero]) return ['Já lançado antes',''];
+  if (r.avisos.length || r.itens.some(i => !i.produtoId)) return ['Conferir','warn'];
+  return ['Pronto para lançar','info'];
+}
+function modalImportar(manter){
+  if (!manter) window._imp = [];
+  const imp = window._imp;
+  const prontos = imp.filter(r => statusImp(r)[0]==='Pronto para lançar');
+  openModal(`
+    <div class="modal-h"><div><div class="eyebrow">Pedidos</div><h2>Importar PDF do pedido de venda</h2></div><button class="btn ghost" data-act="close" aria-label="Fechar">✕</button></div>
+    <div class="modal-b">
+      <label class="drop" id="impDrop"><input type="file" id="impFile" accept="application/pdf,.pdf" multiple hidden>
+        <b>Arraste os PDFs aqui ou clique para escolher</b><span class="small">Pode enviar vários de uma vez. O sistema lê nº, emissão, vendedor, cliente, cidade, itens e OBS, e você confere antes de lançar.</span></label>
+      ${imp.map((r,k) => { const [st,cl] = statusImp(r); return `<div class="imp ${cl==='crit'?'bad':cl==='info'||cl==='ok'?'ok':''}">
+        <div class="actions" style="justify-content:space-between"><div><span class="small muted">${esc(r.arquivo)}</span><div><b class="mono">${esc(r.numero||'sem número')}</b> ${r.cliente?'· '+esc(r.cliente):''} <span class="small muted">${esc(r.cidade||'')}${r.uf?'/'+esc(r.uf):''}${r.emissao?' · emitido '+fd(r.emissao):''}${r.vendedor?' · '+esc(r.vendedor):''}</span></div></div><span class="pill ${cl}">${st}</span></div>
+        ${r.erro ? `<div class="err">${esc(r.erro)}</div>` : r.lendo ? '' : `
+        <div class="small">${r.itens.map(i => `<span class="mono muted">${esc(i.codigo)}</span> ${esc(i.produtoId ? prodNome(i.produtoId) : i.descricao)} <b class="mono">${nf(i.qtd)} kg</b>${i.produtoId?'':' <span class="pill crit">sem cadastro</span>'}`).join(' &nbsp;·&nbsp; ')}</div>
+        ${r.obs?`<div class="small"><b>OBS:</b> ${esc(r.obs)}</div>`:''}
+        ${r.avisos.length?`<div class="note warn small">${r.avisos.map(esc).join('<br>')}</div>`:''}
+        ${!r.lancado && !(r.numero && S.pedidos[r.numero]) ? `<div class="actions"><button class="btn sm" data-act="revisarImp" data-k="${k}">Conferir e editar</button>${st==='Pronto para lançar'?`<button class="btn sm pri" data-act="lancarImp" data-k="${k}">Lançar</button>`:''}</div>` : ''}`}
+        ${r.linhas?.length ? `<details><summary class="small muted" style="cursor:pointer">Ver o texto lido do PDF</summary><pre class="raw">${esc(r.linhas.join('\n'))}</pre></details>` : ''}
+      </div>`; }).join('')}
+    </div>
+    <div class="modal-f"><button class="btn" data-act="close">Fechar</button>${prontos.length>1?`<button class="btn pri" data-act="lancarTodosImp">Lançar os ${prontos.length} prontos</button>`:''}</div>`, 'wide');
+  const drop = $('#impDrop');
+  $('#impFile').addEventListener('change', e => processarPdfs(e.target.files));
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+  drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('over'); processarPdfs(e.dataTransfer.files); });
+}
+async function processarPdfs(files){
+  const novos = [...files].filter(f => /\.pdf$/i.test(f.name) || f.type==='application/pdf');
+  if (!novos.length) return toast('Escolha arquivos em PDF.');
+  const regs = novos.map(f => ({arquivo:f.name, lendo:true, itens:[], avisos:[]}));
+  window._imp.push(...regs); modalImportar(true);
+  for (let i=0; i<novos.length; i++){
+    const r = regs[i];
+    try {
+      const linhas = await textoPdf(novos[i]);
+      if (!linhas.join('').trim()) { Object.assign(r, {lendo:false, erro:'Este PDF não tem texto (parece uma folha escaneada ou foto). Gere o PDF direto do sistema de vendas, imprimindo em "Microsoft Print to PDF".'}); }
+      else Object.assign(r, parsePedido(linhas), {lendo:false, linhas});
+    } catch(e){ Object.assign(r, {lendo:false, erro: /Falha ao carregar/.test(e.message) ? 'Não consegui carregar o leitor de PDF. Verifique a conexão com a internet.' : 'Não foi possível ler este arquivo: '+e.message}); }
+    if ($('#impDrop')) modalImportar(true);
+  }
+}
+function pedidoDeImp(r){
+  return {id:r.numero, numero:r.numero, emissao:r.emissao||hoje(), vendedor:r.vendedor, cliente:r.cliente, cidade:r.cidade, uf:r.uf, obs:r.obs, dataPrevista:'',
+    itens: r.itens.map(i => ({produtoId:i.produtoId, qtd:i.qtd})), origem:'pdf', arquivo:r.arquivo, criadoEm:agora(), criadoPor:quem()};
+}
+async function lancarImp(k){
+  const r = window._imp[k]; if (statusImp(r)[0]!=='Pronto para lançar') return;
+  await Store.put('pedidos', pedidoDeImp(r)); r.lancado = true; modalImportar(true); toast(`Pedido ${r.numero} lançado`);
+}
+
+/* ---------- COMPRAS ---------- */
+const comprasL = () => Object.values(S.compras||{});
+const ABERTA = c => ['solicitada','cotacao','comprada'].includes(c.status);
+const comprasAbertasMP = id => comprasL().filter(c => c.mpId===id && ABERTA(c));
+const faltaReceber = c => Math.max(0, c.qtd - (c.qtdRecebida||0));
+const ST_SC = {solicitada:['Aguardando diretor','crit'], cotacao:['Em cotação','warn'], comprada:['Comprado','info'], recebida:['Recebido','ok'], recusada:['Recusada',''], cancelada:['Cancelada','']};
+const scNum = c => 'SC-' + String(c.numero).padStart(4,'0');
+const atrasada = c => c.status==='comprada' && c.previsao && c.previsao < hoje();
+const horasDesde = iso => (Date.now() - new Date(iso).getTime()) / 3600000;
+function pillSC(c){ const [t,cl] = ST_SC[c.status]; return atrasada(c) ? `<span class="pill crit">Entrega atrasada</span>` : `<span class="pill ${cl}">${t}</span>`; }
+function tempoEspera(c){ const h = horasDesde(c.solicitadoEm); return h < 1 ? 'agora há pouco' : h < 24 ? `há ${Math.floor(h)} h` : `há ${Math.floor(h/24)} dia(s)`; }
+const aguardandoDiretor = () => comprasL().filter(c => c.status==='solicitada').sort((a,b) => (b.urgente?1:0)-(a.urgente?1:0) || a.solicitadoEm.localeCompare(b.solicitadoEm));
+
+/* e-mail (EmailJS) — veja LEIA-ME */
+let EMAIL_P = null;
+async function enviarEmail(para, assunto, mensagem){
+  if (!EMAILJS_CONFIG || !para) return false;
+  try {
+    EMAIL_P ||= loadScript('https://cdn.jsdelivr.net/npm/@emailjs/browser@4.4.1/dist/email.min.js').then(() => emailjs.init({publicKey: EMAILJS_CONFIG.publicKey}));
+    await EMAIL_P;
+    await emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {to_email: para, assunto, mensagem, link: location.href.split('#')[0]});
+    return true;
+  } catch(e){ console.warn('Falha ao enviar e-mail', e); return false; }
+}
+function textoSC(c){
+  const m = S.materias[c.mpId];
+  return `${c.urgente?'URGENTE — ':''}Solicitação de compra ${scNum(c)}\n\nItem: ${m?.nome}\nQuantidade: ${nf(c.qtd)} ${mpUn(m)}\nPrecisa chegar até: ${fd(c.precisaAte)}\nSaldo no momento: ${nf(c.saldoNoPedido)} ${mpUn(m)} (dura cerca de ${c.duraDias ?? '—'} dias)\nFornecedor habitual: ${m?.fornecedor||'—'}\n${c.obs?'Observação: '+c.obs+'\n':''}\nSolicitado por ${c.solicitadoPor} em ${new Date(c.solicitadoEm).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}.\nResponda no sistema Quimivet PCP, em Compras.`;
+}
+const mailtoSC = c => `mailto:${encodeURIComponent(S.config.emailDiretor||'')}?subject=${encodeURIComponent((c.urgente?'[URGENTE] ':'')+'Solicitação de compra '+scNum(c)+' – '+(S.materias[c.mpId]?.nome||''))}&body=${encodeURIComponent(textoSC(c))}`;
+
+function modalSolicitar(mpId){
+  const m = S.materias[mpId]; if (!m) return;
+  const s = situacaoMP(m), ab = comprasAbertasMP(mpId);
+  openModal(`
+    <div class="modal-h"><div><div class="eyebrow">Solicitação de compra</div><h2>${esc(m.nome)} ${pillMP(s.st)}</h2></div><button class="btn ghost" data-act="close" aria-label="Fechar">✕</button></div>
+    <div class="modal-b">
+      <div class="metrics">
+        <div class="metric"><b>${nf(Math.round(s.saldo))} ${esc(mpUn(m))}</b><span>saldo</span></div>
+        <div class="metric"><b>${s.dur===Infinity?'—':Math.max(0,Math.floor(s.dur))+' dias'}</b><span>dura</span></div>
+        <div class="metric"><b>${nf(Math.ceil(s.ponto))}</b><span>mínimo sugerido</span></div>
+        <div class="metric"><b>${s.lead} dias</b><span>prazo do fornecedor</span></div>
+        <div class="metric ${s.sug?'crit':'ok'}"><b>${nf(s.sug)}</b><span>compra sugerida</span></div>
+      </div>
+      ${ab.length?`<div class="note warn small">Já existe compra em andamento para este item: ${ab.map(c => `${scNum(c)} (${nf(faltaReceber(c))} ${esc(mpUn(m))}, ${ST_SC[c.status][0].toLowerCase()})`).join(', ')}. A sugestão já desconta essa quantidade.</div>`:''}
+      <div class="form">
+        <label class="f">Quantidade (${esc(mpUn(m))})<input id="scQtd" type="number" min="0" step="any" value="${s.sug||m.multiploCompra||''}"></label>
+        <label class="f">Precisa chegar até<input id="scAte" type="date" value="${addDias(hoje(), Math.max(1, Math.min(s.lead, s.dur===Infinity?s.lead:Math.floor(s.dur))))}"></label>
+        <label class="f">Prioridade<select id="scUrg"><option value="0">Normal</option><option value="1" ${s.st==='crit'?'selected':''}>Urgente</option></select></label>
+        <label class="f span2">Observação para o diretor<input id="scObs" placeholder="Opcional"></label>
+      </div>
+      <div class="small muted">A sugestão cobre o consumo até a entrega, ${s.seg} dias de segurança e mais ${s.cob} dias de produção${m.multiploCompra?`, arredondada para múltiplos de ${nf(m.multiploCompra)} ${esc(mpUn(m))}`:''}. Você pode alterar.</div>
+      <div class="err" id="scErr"></div>
+    </div>
+    <div class="modal-f"><button class="btn" data-act="close">Cancelar</button><button class="btn pri" data-act="enviarSC" data-id="${mpId}">Enviar ao diretor</button></div>`);
+}
+async function novaSC(mpId, qtd, precisaAte, urgente, obs){
+  const m = S.materias[mpId], s = situacaoMP(m);
+  const numero = await Store.contador('proximaSC');
+  const c = {id:uid(), numero, mpId, qtd, qtdSugerida:s.sug, precisaAte, urgente, obs, status:'solicitada', solicitadoEm:agora(), solicitadoPor:quem(),
+    saldoNoPedido:Math.round(s.saldo*10)/10, duraDias: s.dur===Infinity ? null : Math.max(0, Math.floor(s.dur)), qtdRecebida:0, lembretes:0,
+    historico:[{em:agora(), por:quem(), txt:`Solicitada: ${nf(qtd)} ${mpUn(m)}${urgente?' (urgente)':''}`}]};
+  const ok = await enviarEmail(S.config.emailDiretor, `${urgente?'[URGENTE] ':''}Solicitação de compra ${scNum(c)} – ${m.nome}`, textoSC(c));
+  if (ok){ c.historico.push({em:agora(), por:'sistema', txt:`E-mail enviado para ${S.config.emailDiretor}`}); c.ultimoLembrete = agora(); }
+  await Store.put('compras', c);
+  return {c, ok};
+}
+async function enviarSC(mpId){
+  const q = +$('#scQtd').value, ate = $('#scAte').value;
+  if (!(q>0)) return $('#scErr').textContent = 'Informe a quantidade.';
+  if (!ate) return $('#scErr').textContent = 'Informe até quando o material precisa chegar.';
+  const {c, ok} = await novaSC(mpId, q, ate, $('#scUrg').value==='1', $('#scObs').value.trim());
+  closeModal(); toast(`${scNum(c)} enviada ao diretor${ok?' (com e-mail)':''}`);
+}
+function modalSolicitarVarios(){
+  const itens = Object.values(S.materias).map(m => ({m, s:situacaoMP(m)})).filter(x => x.s.sug>0).sort((a,b)=>(a.s.st==='crit'?0:1)-(b.s.st==='crit'?0:1));
+  openModal(`
+    <div class="modal-h"><div><div class="eyebrow">Compras</div><h2>Solicitar as compras sugeridas</h2></div><button class="btn ghost" data-act="close" aria-label="Fechar">✕</button></div>
+    <div class="modal-b">${itens.length ? `<div class="small muted">Marque os itens, ajuste as quantidades se quiser, e envie. Cada item vira uma solicitação no painel do diretor.</div>
+      <div class="tbl-wrap"><table><thead><tr><th></th><th>Item</th><th>Situação</th><th class="r">Dura</th><th class="r">Quantidade</th></tr></thead><tbody>
+      ${itens.map(({m,s}) => `<tr data-mp="${m.id}" data-crit="${s.st==='crit'?1:0}" data-ate="${addDias(hoje(), Math.max(1, Math.min(s.lead, s.dur===Infinity?s.lead:Math.floor(s.dur))))}"><td><input type="checkbox" class="sv-chk" checked aria-label="Incluir ${esc(m.nome)}"></td><td><b>${esc(m.nome)}</b><div class="small muted">entrega em ${s.lead} dias</div></td><td>${pillMP(s.st)}</td><td class="r mono">${s.dur===Infinity?'—':Math.max(0,Math.floor(s.dur))+' d'}</td><td class="r"><input type="number" class="sv-q" min="0" step="any" value="${s.sug}" style="width:110px"> <span class="small muted">${esc(mpUn(m))}</span></td></tr>`).join('')}
+      </tbody></table></div>` : '<div class="empty">Nenhum item precisa de compra agora.</div>'}</div>
+    <div class="modal-f"><button class="btn" data-act="close">Fechar</button>${itens.length?'<button class="btn pri" data-act="enviarVarios">Enviar ao diretor</button>':''}</div>`, 'wide');
+}
+
+let CMP_FILTRO = 'abertas';
+function vCompras(){
+  const all = comprasL().sort((a,b) => b.numero - a.numero);
+  const F = {aguardando: c => c.status==='solicitada', abertas: c => ABERTA(c), recebidas: c => c.status==='recebida', todas: () => true};
+  const lista = all.filter(F[CMP_FILTRO]);
+  return `
+  <div class="page-head"><div><h1>Compras</h1><p>Solicitações de compra de matéria-prima. A produção solicita a partir das sugestões do estoque. O diretor responde com o andamento e a previsão de entrega, e o recebimento fecha a solicitação ao dar entrada no estoque.</p></div>
+    <div class="actions edit-only"><button class="btn pri" data-act="solicitarVarios">Solicitar compras sugeridas</button></div></div>
+  <div class="tabs" style="margin-bottom:12px">${[['aguardando','Aguardando diretor'],['abertas','Em aberto'],['recebidas','Recebidas'],['todas','Todas']].map(([k,t]) => `<button class="tab ${CMP_FILTRO===k?'on':''}" data-act="cmpFiltro" data-k="${k}">${t} <span class="muted">${all.filter(F[k]).length}</span></button>`).join('')}</div>
+  <section class="panel"><div class="tbl-wrap"><table>
+    <thead><tr><th>Nº</th><th>Item</th><th class="r">Qtde</th><th class="adv">Solicitada</th><th class="adv">Precisa até</th><th>Chega em</th><th class="adv">Fornecedor</th><th>Situação</th></tr></thead>
+    <tbody>${lista.length ? lista.map(c => { const m = S.materias[c.mpId]; return `<tr class="click" data-act="compra" data-id="${c.id}">
+      <td class="mono"><b>${scNum(c)}</b> ${c.urgente&&ABERTA(c)?'<span class="pill crit">urgente</span>':''}</td><td>${esc(m?.nome||'?')}</td>
+      <td class="r mono">${nf(c.qtd)} ${esc(mpUn(m))}${c.qtdRecebida&&c.status!=='recebida'?`<div class="small muted">recebido ${nf(c.qtdRecebida)}</div>`:''}</td>
+      <td class="small adv">${fd(c.solicitadoEm.slice(0,10))}<div class="muted">${c.status==='solicitada'?tempoEspera(c):''}</div></td><td class="mono adv">${fd(c.precisaAte)}</td>
+      <td class="mono">${c.previsao?fd(c.previsao):'—'}</td><td class="small adv">${esc(c.fornecedor||'—')}</td><td>${pillSC(c)}</td></tr>`; }).join('') : '<tr><td colspan="8" class="empty">Nenhuma solicitação aqui.</td></tr>'}
+    </tbody></table></div></section>`;
+}
+function modalCompra(id){
+  const c = S.compras[id]; if (!c) return;
+  const m = S.materias[c.mpId], u = esc(mpUn(m)), dir = PERFIL==='diretor';
+  openModal(`
+    <div class="modal-h"><div><div class="eyebrow">Solicitação de compra · ${fd(c.solicitadoEm.slice(0,10))} por ${esc(c.solicitadoPor)}</div><h2><span class="mono">${scNum(c)}</span> ${esc(m?.nome||'?')} ${pillSC(c)} ${c.urgente&&ABERTA(c)?'<span class="pill crit">urgente</span>':''}</h2></div><button class="btn ghost" data-act="close" aria-label="Fechar">✕</button></div>
+    <div class="modal-b">
+      <div class="metrics">
+        <div class="metric"><b>${nf(c.qtd)} ${u}</b><span>solicitado</span></div>
+        <div class="metric"><b>${fd(c.precisaAte)}</b><span>precisa chegar até</span></div>
+        <div class="metric"><b>${nf(c.saldoNoPedido)} ${u}</b><span>saldo na solicitação</span></div>
+        <div class="metric"><b>${nf(Math.round(saldoMP(c.mpId)))} ${u}</b><span>saldo hoje</span></div>
+        ${c.previsao?`<div class="metric ${atrasada(c)?'crit':''}"><b>${fd(c.previsao)}</b><span>previsão de entrega</span></div>`:''}
+        ${c.qtdRecebida?`<div class="metric ok"><b>${nf(c.qtdRecebida)} ${u}</b><span>recebido</span></div>`:''}
+      </div>
+      ${c.obs?`<div class="note small"><b>Observação da produção:</b> ${esc(c.obs)}</div>`:''}
+      ${c.respostaObs?`<div class="note small"><b>Diretor:</b> ${esc(c.respostaObs)}</div>`:''}
+      ${dir && ABERTA(c) ? `
+        <div class="panel panel-b grid" style="gap:10px"><b>Responder</b>
+          <div class="form">
+            <label class="f">Situação<select id="rsSt">
+              <option value="cotacao" ${c.status==='cotacao'?'selected':''}>Em cotação</option>
+              <option value="comprada" ${c.status==='comprada'||c.status==='solicitada'?'selected':''}>Comprado (pedido feito ao fornecedor)</option>
+              <option value="recusada">Recusar / não comprar agora</option></select></label>
+            <label class="f">Previsão de entrega<input id="rsPrev" type="date" value="${c.previsao||c.precisaAte||''}"></label>
+            <label class="f">Quantidade comprada<input id="rsQtd" type="number" min="0" step="any" value="${c.qtd}"></label>
+            <label class="f">Fornecedor<input id="rsForn" value="${esc(c.fornecedor||m?.fornecedor||'')}"></label>
+            <label class="f span2">Observação para a produção<input id="rsObs" value="${esc(c.respostaObs||'')}" placeholder="Opcional"></label>
+          </div>
+          <div class="actions"><button class="btn pri" data-act="responderSC" data-id="${c.id}">Salvar resposta</button></div></div>` : ''}
+      ${!dir && canEdit() && ABERTA(c) ? `<div class="note small">${c.status==='solicitada' ? `Aguardando o diretor ${tempoEspera(c)}.${c.lembretes?` Lembrete por e-mail enviado ${c.lembretes} vez(es).`:''}` : c.status==='comprada' ? 'Quando o material chegar, registre o recebimento. A entrada no estoque fecha esta solicitação.' : 'O diretor está cotando esta compra.'}</div>` : ''}
+      ${c.status==='solicitada' ? `<div class="small muted">Avisar por e-mail: <a href="${mailtoSC(c)}" target="_blank" rel="noopener">abrir mensagem para ${esc(S.config.emailDiretor||'o diretor')}</a>${S.config.emailDiretor?'':' (cadastre o e-mail do diretor em Cadastros → Configurações)'}</div>` : ''}
+      <div><div class="eyebrow" style="margin-bottom:6px">Histórico</div><div class="hist">${(c.historico||[]).map(h => `<div><span class="mono muted">${new Date(h.em).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}</span><span>${esc(h.txt)} <span class="muted">· ${esc(h.por)}</span></span></div>`).join('')}</div></div>
+      <div class="err" id="rsErr"></div>
+    </div>
+    <div class="modal-f">
+      ${!dir && canEdit() && c.status==='solicitada' ? `<button class="btn danger" data-act="cancelarSC" data-id="${c.id}" style="margin-right:auto">Cancelar solicitação</button>`:''}
+      <button class="btn" data-act="close">Fechar</button>
+      ${canEdit() && (c.status==='comprada' || c.status==='cotacao') ? `<button class="btn pri" data-act="receberSC" data-id="${c.id}">Registrar recebimento</button>`:''}
+    </div>`, 'wide');
+}
+async function responderSC(id){
+  const c = clone(S.compras[id]), st = $('#rsSt').value, prev = $('#rsPrev').value, q = +$('#rsQtd').value, forn = $('#rsForn').value.trim(), obs = $('#rsObs').value.trim();
+  if (st==='comprada' && !prev) return $('#rsErr').textContent = 'Informe a previsão de entrega.';
+  if (st==='recusada' && !obs) return $('#rsErr').textContent = 'Explique o motivo para a produção.';
+  if (!(q>0)) return $('#rsErr').textContent = 'Informe a quantidade.';
+  const m = S.materias[c.mpId], mud = [];
+  if (st!==c.status) mud.push(ST_SC[st][0]);
+  if (q!==c.qtd) mud.push(`quantidade ${nf(c.qtd)} → ${nf(q)} ${mpUn(m)}`);
+  if (prev && prev!==c.previsao && st!=='recusada') mud.push(`previsão de entrega ${fd(prev)}`);
+  if (forn && forn!==c.fornecedor) mud.push(`fornecedor ${forn}`);
+  if (obs && obs!==c.respostaObs) mud.push(`"${obs}"`);
+  Object.assign(c, {status:st, previsao: st==='recusada' ? '' : prev, qtd:q, fornecedor:forn, respostaObs:obs, respondidoEm: c.respondidoEm || agora()});
+  c.historico.push({em:agora(), por:quem(), txt: mud.length ? mud.join(' · ') : 'Resposta salva'});
+  if (c.status==='recusada') c.encerradoEm = agora();
+  const ok = await enviarEmail(S.config.emailProducao, `${scNum(c)} ${m.nome}: ${ST_SC[st][0]}`, `${scNum(c)} – ${m.nome}\nSituação: ${ST_SC[st][0]}\n${c.previsao?'Previsão de entrega: '+fd(c.previsao)+'\n':''}${forn?'Fornecedor: '+forn+'\n':''}${obs?'Observação: '+obs+'\n':''}`);
+  if (ok) c.historico.push({em:agora(), por:'sistema', txt:`E-mail enviado para ${S.config.emailProducao}`});
+  await Store.put('compras', c); modalCompra(id); toast('Resposta enviada à produção');
+}
+
+/* lembretes: faixa fixa, pop-up periódico, contador na aba e e-mail diário */
+let LEMBRETE_EM = 0, LEMBRETE_TIMER = null;
+function faixaAvisos(){
+  if (PERFIL==='diretor'){
+    const ag = aguardandoDiretor(); if (!ag.length) return '';
+    const urg = ag.filter(c => c.urgente).length, velha = ag.filter(c => horasDesde(c.solicitadoEm) > 24).length;
+    return `<div class="banner ${urg||velha?'crit':'warn'}"><span><b>${ag.length} solicitação(ões) de compra aguardando sua resposta</b>${urg?` · ${urg} urgente(s)`:''}${velha?` · ${velha} há mais de 24 h`:''}</span><a href="#compras" class="btn sm" data-act="irAguardando">Responder agora</a></div>`;
+  }
+  if (canEdit()){
+    const atr = comprasL().filter(atrasada); if (!atr.length) return '';
+    return `<div class="banner warn"><span><b>${atr.length} compra(s) com entrega atrasada:</b> ${atr.map(c => `${scNum(c)} ${esc(S.materias[c.mpId]?.nome||'')} (previsto ${fd(c.previsao)})`).join(', ')}</span><a href="#compras" class="btn sm">Ver compras</a></div>`;
+  }
+  return '';
+}
+function lembrarDiretor(forcar){
+  if (PERFIL!=='diretor' || $('#overlay')) return;
+  const ag = aguardandoDiretor(); if (!ag.length) return;
+  if (!forcar && Date.now() - LEMBRETE_EM < 30*60000) return;
+  LEMBRETE_EM = Date.now();
+  openModal(`
+    <div class="modal-h"><div><div class="eyebrow">Lembrete</div><h2>${ag.length} solicitação(ões) de compra aguardando você</h2></div><button class="btn ghost" data-act="close" aria-label="Fechar">✕</button></div>
+    <div class="modal-b"><div class="tbl-wrap"><table><tbody>
+      ${ag.map(c => { const m = S.materias[c.mpId]; return `<tr class="click" data-act="compra" data-id="${c.id}"><td class="mono"><b>${scNum(c)}</b></td><td><b>${esc(m?.nome||'?')}</b><div class="small muted">${nf(c.qtd)} ${esc(mpUn(m))} · precisa até ${fd(c.precisaAte)} · ${tempoEspera(c)}</div></td><td>${c.urgente?'<span class="pill crit">urgente</span>':''}</td><td class="r"><button class="btn sm pri" data-act="compra" data-id="${c.id}">Responder</button></td></tr>`; }).join('')}
+    </tbody></table></div><div class="small muted">Este aviso volta a aparecer a cada 30 minutos enquanto houver solicitações sem resposta.</div></div>
+    <div class="modal-f"><button class="btn" data-act="close">Lembrar mais tarde</button></div>`);
+}
+async function lembretesEmail(){
+  if (!EMAILJS_CONFIG || !S.config.emailDiretor || !canEdit()) return;
+  for (const c of aguardandoDiretor()){
+    if (horasDesde(c.ultimoLembrete || c.solicitadoEm) < 24) continue;
+    const m = S.materias[c.mpId];
+    const ok = await enviarEmail(S.config.emailDiretor, `Lembrete: ${c.urgente?'[URGENTE] ':''}${scNum(c)} – ${m?.nome} aguarda resposta ${tempoEspera(c)}`, textoSC(c));
+    if (ok){ const n = clone(c); n.ultimoLembrete = agora(); n.lembretes = (n.lembretes||0)+1; n.historico.push({em:agora(), por:'sistema', txt:`Lembrete por e-mail nº ${n.lembretes} enviado`}); await Store.put('compras', n); }
+  }
+}
+function iniciarLembretes(){
+  if (LEMBRETE_TIMER) return;
+  LEMBRETE_TIMER = setInterval(() => { lembrarDiretor(false); lembretesEmail(); }, 5*60000);
+  setTimeout(() => { lembrarDiretor(true); lembretesEmail(); }, 600);
+}
+
+function celulaCompra(m, s, u){
+  const ab = comprasAbertasMP(m.id);
+  const abTxt = ab.map(c => `<a href="#" data-act="compra" data-id="${c.id}" class="small">${scNum(c)}</a> <span class="small muted">${ST_SC[c.status][0].toLowerCase()}${c.previsao?' · '+fd(c.previsao).slice(0,5):''}</span>`).join('<br>');
+  if (!s.sug) return abTxt || '<span class="muted">—</span>';
+  return `<div class="actions" style="justify-content:flex-end;gap:8px;flex-wrap:nowrap"><b class="mono">${nf(s.sug)} ${u}</b><button class="btn sm ${s.st==='crit'?'pri':''} edit-only" data-act="solicitar" data-id="${m.id}">Solicitar</button></div>${abTxt?'<div>'+abTxt+'</div>':''}`;
+}
+function badgeCompras(){
+  if (PERFIL==='diretor'){ const n = aguardandoDiretor().length; return n ? `<span class="badge">${n}</span>` : ''; }
+  const n = comprasL().filter(atrasada).length; return n ? `<span class="badge warn">${n}</span>` : '';
+}
+function painelComprasDiretor(){
+  const ab = comprasL().filter(ABERTA).sort((a,b) => ['solicitada','cotacao','comprada'].indexOf(a.status)-['solicitada','cotacao','comprada'].indexOf(b.status) || (b.urgente?1:0)-(a.urgente?1:0) || a.solicitadoEm.localeCompare(b.solicitadoEm));
+  return `<section class="panel" style="margin-bottom:16px"><div class="panel-h"><h2>Solicitações de compra</h2><a href="#compras" class="small">Todas as compras →</a></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Nº</th><th>Item</th><th class="r">Qtde</th><th>Precisa até</th><th>Solicitada</th><th>Situação</th><th></th></tr></thead><tbody>
+    ${ab.length ? ab.map(c => { const m = S.materias[c.mpId]; return `<tr class="click" data-act="compra" data-id="${c.id}"><td class="mono"><b>${scNum(c)}</b></td><td><b>${esc(m?.nome||'?')}</b>${c.urgente?' <span class="pill crit">urgente</span>':''}${c.obs?`<div class="small muted">${esc(c.obs)}</div>`:''}</td><td class="r mono">${nf(c.qtd)} ${esc(mpUn(m))}</td><td class="mono">${fd(c.precisaAte)}</td><td class="small">${tempoEspera(c)}</td><td>${pillSC(c)}${c.previsao?`<div class="small muted">prev. ${fd(c.previsao)}</div>`:''}</td><td class="r">${c.status==='solicitada'?`<button class="btn sm pri" data-act="compra" data-id="${c.id}">Responder</button>`:''}</td></tr>`; }).join('') : '<tr><td colspan="7" class="empty">Nenhuma solicitação de compra em aberto.</td></tr>'}
+    </tbody></table></div></section>`;
+}
+
+
+/* ---------- INÍCIO (tela simples da produção) ---------- */
+function vInicio(){
+  const h = hoje(), hr = new Date().getHours();
+  const pedEsp = new Set(itensPendentes().map(x => x.p.id)).size;
+  const fazer = ativas().filter(b => b.status!=='produzida' && b.data<=h).sort((a,b) => a.data.localeCompare(b.data) || (a.lote||1e9)-(b.lote||1e9));
+  const feitas = ativas().filter(b => b.status==='produzida' && b.data===h && b.origem!=='saldo');
+  const amanha = ativas().filter(b => b.status!=='produzida' && b.data===addDias(h,1));
+  const chegando = comprasL().filter(c => c.status==='comprada');
+  const comprar = Object.values(S.materias).map(m => situacaoMP(m)).filter(s => s.st==='crit' || s.st==='repor').length;
+  const tile = (act, ic, titulo, cnt, cls='', extra='') => `<button class="tile ${cls}" ${act.startsWith('#')?`data-act="ir" data-k="${act.slice(1)}"`:`data-act="${act}"`} ${extra}><span class="ic">${svg(ic)}</span><b>${titulo}</b><span class="cnt">${cnt}</span></button>`;
+  return `
+  <div class="page-head"><div><div class="eyebrow">${new Date().toLocaleDateString('pt-BR',{weekday:'long', day:'numeric', month:'long'})}</div><h1>${hr<12?'Bom dia':hr<18?'Boa tarde':'Boa noite'}! O que você precisa fazer?</h1></div></div>
+  <div class="tiles">
+    ${tile('importar','pedidos','Chegou pedido','Enviar o PDF do pedido')}
+    ${tile('#planejamento','planejamento','Planejar produção', pedEsp ? `${pedEsp} pedido(s) esperando` : 'Tudo planejado', pedEsp ? 'warn' : '')}
+    ${tile('entradaMP','chegou','Chegou material', chegando.length ? `${chegando.length} compra(s) a caminho` : 'Registrar a entrada')}
+    ${tile('solicitarVarios','compras','Pedir compra', comprar ? `${comprar} item(ns) acabando` : 'Estoque em dia', comprar ? 'alert' : '')}
+    ${tile('ajusteMP','contar','Contar estoque','Corrigir o saldo')}
+  </div>
+  <div class="page-head" style="margin-bottom:12px"><h2 style="font-size:1.3rem">Produção de hoje</h2>${feitas.length?`<span class="pill ok">${feitas.length} batida(s) concluída(s) hoje · ${nf(feitas.reduce((s,b)=>s+kgBatida(b),0))} kg</span>`:''}</div>
+  <div class="jobs">
+    ${fazer.length ? fazer.map(b => { const cli = clientesBatida(b), late = b.data < h;
+      return `<div class="job ${late?'late':''}">
+        <div style="min-width:0">
+          ${late?`<span class="pill crit">Atrasada · era para ${fd(b.data)}</span>`:''}
+          <h3>${esc(curto(prodNome(b.produtoId)))} · <span class="mono">${nf(b.kg)} kg</span></h3>
+          <div class="who">${cli ? 'Para: '+cli : 'Para o estoque'}</div>
+          <div class="steps"><span class="${b.lote?'done':'on'}">1. Gerar lote</span><span class="${b.lote?'on':''}">2. Produzir e confirmar</span></div>
+        </div>
+        <div class="actions" style="gap:12px">
+          <button class="btn sm ghost" data-act="batida" data-id="${b.id}">Detalhes</button>
+          ${b.lote ? `<span class="lotebig">LOTE ${b.lote}</span><button class="btn lg pri" data-act="hojeFeito" data-id="${b.id}">Terminei a produção</button>`
+                   : `<button class="btn lg pri" data-act="hojeLote" data-id="${b.id}">Gerar lote</button>`}
+        </div></div>`; }).join('')
+      : `<div class="panel empty" style="padding:32px 16px"><div style="font-size:1.05rem;margin-bottom:12px">Nenhuma batida programada para hoje.</div><button class="btn pri" data-act="ir" data-k="planejamento">Planejar produção</button></div>`}
+  </div>
+  ${amanha.length?`<div class="small muted" style="margin-top:14px">Amanhã: ${amanha.map(b => `${esc(curto(prodNome(b.produtoId)))} ${nf(b.kg)} kg`).join(' · ')}</div>`:''}`;
+}
+function modalTerminei(id){
+  const b = S.batidas[id];
+  openModal(`
+    <div class="modal-h"><div><div class="eyebrow">${esc(curto(prodNome(b.produtoId)))} · lote ${b.lote}</div><h2>Quantos kg saíram nesta batida?</h2></div><button class="btn ghost" data-act="close" aria-label="Fechar">✕</button></div>
+    <div class="modal-b" id="bdSimple">
+      <input id="bdReal" class="bigin" type="number" min="${alocadoBatida(b)}" max="${CAPACIDADE}" value="${b.kg}" aria-label="Quilos produzidos">
+      <div class="small muted">A matéria-prima sai do estoque automaticamente.</div>
+      <div class="err" id="bdErr"></div>
+    </div>
+    <div class="modal-f"><button class="btn lg" data-act="close">Voltar</button><button class="btn lg pri" data-act="registrarProd" data-id="${id}">Confirmar produção</button></div>`);
+}
+
+
+/* ---------- ANÁLISE (gestão) ---------- */
+let AN = {per:'12m', grp:'', prod:''};
+const MESES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const semanaIni = iso => addDias(iso, -((new Date(iso+'T12:00:00').getDay()+6)%7));
+const chave = (iso,g) => g==='dia' ? iso : g==='semana' ? semanaIni(iso) : g==='mes' ? iso.slice(0,7) : iso.slice(0,4);
+const rotulo = (k,g) => g==='dia'||g==='semana' ? k.slice(8)+'/'+k.slice(5,7) : g==='mes' ? MESES[+k.slice(5,7)-1]+'/'+k.slice(2,4) : k;
+function primeiraData(){ let m = hoje(); for (const b of Object.values(S.batidas)) if (b.data < m && b.origem!=='saldo') m = b.data; return m; }
+function faixaAnalise(){
+  const h = hoje(); let ini, g;
+  if (AN.per==='30d'){ ini = addDias(h,-29); g = 'dia'; }
+  else if (AN.per==='90d'){ ini = addDias(h,-89); g = 'semana'; }
+  else if (AN.per==='ano'){ ini = h.slice(0,4)+'-01-01'; g = 'mes'; }
+  else if (AN.per==='tudo'){ ini = primeiraData(); g = 'mes'; }
+  else { const d = new Date(h+'T12:00:00'); d.setDate(1); d.setMonth(d.getMonth()-11); ini = isoDate(d); g = 'mes'; }
+  g = AN.grp || g; const dias = diasEntre(ini,h)+1;
+  return {ini, fim:h, g, dias, pIni:addDias(ini,-dias), pFim:addDias(ini,-1)};
+}
+function chavesEntre(ini, fim, g){ const out = []; let last = null; for (let d = ini; d <= fim; d = addDias(d,1)){ const k = chave(d,g); if (k!==last){ out.push(k); last = k; } } return out; }
+const batsProd = (ini,fim,prod) => Object.values(S.batidas).filter(b => b.status==='produzida' && b.origem!=='saldo' && b.data>=ini && b.data<=fim && (!prod || b.produtoId===prod));
+const pedsPer = (ini,fim,prod) => Object.values(S.pedidos).filter(p => p.emissao>=ini && p.emissao<=fim && (!prod || p.itens.some(i => i.produtoId===prod)));
+const kgPed = (p,prod) => p.itens.filter(i => !prod || i.produtoId===prod).reduce((s,i)=>s+i.qtd, 0);
+const media = a => a.length ? a.reduce((x,y)=>x+y,0)/a.length : null;
+function resumoPer(ini, fim, prod){
+  const bs = batsProd(ini,fim,prod), ps = pedsPer(ini,fim,prod);
+  const kg = bs.reduce((s,b)=>s+kgBatida(b),0), n = bs.length;
+  const tempos = [];
+  for (const p of ps){ let max = null, ok = true;
+    p.itens.forEach((it,i) => { if (prod && it.produtoId!==prod) return; const xs = alocacoesItem(p.id,i);
+      if (xs.reduce((s,x)=>s+x.a.qtd,0) < it.qtd) ok = false;
+      xs.forEach(x => { if (x.b.status!=='produzida') ok = false; if (!max || x.b.data > max) max = x.b.data; }); });
+    if (ok && max) tempos.push(Math.max(0, diasEntre(p.emissao, max))); }
+  const cs = comprasL().filter(c => { const d = c.solicitadoEm.slice(0,10); return d>=ini && d<=fim; });
+  const rec = cs.filter(c => c.status==='recebida' && c.previsao && c.encerradoEm);
+  return {kg, n, aprov: n ? kg/(n*CAPACIDADE) : null, kgP: ps.reduce((s,p)=>s+kgPed(p,prod),0), nP: ps.length, tAt: media(tempos),
+    nC: cs.length, resp: media(cs.filter(c=>c.respondidoEm).map(c => (new Date(c.respondidoEm)-new Date(c.solicitadoEm))/3600000)),
+    prazo: rec.length ? rec.filter(c => c.encerradoEm.slice(0,10) <= c.previsao).length / rec.length : null, bs, ps, cs};
+}
+function delta(a, b, menorMelhor){
+  if (a==null || !b) return '<span class="muted">sem base de comparação</span>';
+  const p = (a-b)/b, bom = menorMelhor ? p < 0 : p > 0;
+  if (Math.abs(p) < 0.005) return '<span class="muted">igual ao período anterior</span>';
+  return `<span style="color:${bom?'var(--accent)':'var(--crit)'};font-weight:600">${p>0?'▲':'▼'} ${nf(Math.abs(p*100))}%</span> <span class="muted">vs período anterior</span>`;
+}
+function niceStep(x){ if (x <= 0) return 1; const p = 10**Math.floor(Math.log10(x)), f = x/p; return (f<=1?1:f<=2?2:f<=5?5:10)*p; }
+const nfK = v => v >= 10000 ? nf(v/1000)+' t' : nf(v);
+function grafico(labels, series, tipo='bar', H=230){
+  const W = 760, pl = 56, pr = 12, pt = 14, pb = 30, n = Math.max(1, labels.length);
+  const vals = series.flatMap(s => s.vals).filter(v => v!=null), top = Math.max(1, ...vals);
+  const step = niceStep(top/4), max = Math.ceil(top/step)*step;
+  const bw = (W-pl-pr)/n, y = v => pt + (H-pt-pb)*(1 - v/max);
+  let g = ''; for (let v = 0; v <= max+1e-9; v += step) g += `<line class="grid" x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}"/><text x="${pl-8}" y="${y(v)+4}" text-anchor="end">${nfK(v)}</text>`;
+  const every = Math.ceil(n/12); let xl = '';
+  labels.forEach((l,i) => { if (i % every === 0) xl += `<text x="${pl+i*bw+bw/2}" y="${H-8}" text-anchor="middle">${l}</text>`; });
+  let mk = '';
+  if (tipo==='bar'){ const k = series.length, gw = Math.min(bw*0.72, 40*k), w = gw/k;
+    series.forEach((s,si) => s.vals.forEach((v,i) => { if (!v) return; const x = pl + i*bw + (bw-gw)/2 + si*w;
+      mk += `<rect x="${x}" y="${y(v)}" width="${Math.max(1,w-1)}" height="${y(0)-y(v)}" rx="1.5" style="fill:${s.cor}"><title>${labels[i]} · ${s.nome}: ${nf(v)} kg</title></rect>`; })); }
+  else series.forEach(s => { let d = '', pen = false, pts = '';
+    s.vals.forEach((v,i) => { if (v==null){ pen = false; return; } const X = pl+i*bw+bw/2, Y = y(v); d += (pen?'L':'M')+X.toFixed(1)+' '+Y.toFixed(1)+' '; pen = true;
+      pts += `<circle cx="${X}" cy="${Y}" r="3.2" style="fill:${s.cor}"><title>${labels[i]} · ${s.nome}: ${nf(v)} kg</title></circle>`; });
+    mk += `<path d="${d}" fill="none" style="stroke:${s.cor}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>${pts}`; });
+  const leg = series.length > 1 ? `<div class="legend" style="margin-top:8px">${series.map(s => `<span><i style="background:${s.cor}"></i>${s.nome}</span>`).join('')}</div>` : '';
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Gráfico">${g}${mk}${xl}</svg>${leg}`;
+}
+function vAnalise(){
+  const F = faixaAnalise(), prod = AN.prod;
+  const A = resumoPer(F.ini, F.fim, prod), B = resumoPer(F.pIni, F.pFim, prod);
+  const keys = chavesEntre(F.ini, F.fim, F.g), labels = keys.map(k => rotulo(k, F.g));
+  const sp = {}, sd = {};
+  A.bs.forEach(b => { const k = chave(b.data, F.g); sp[k] = (sp[k]||0) + kgBatida(b); });
+  A.ps.forEach(p => { const k = chave(p.emissao, F.g); sd[k] = (sd[k]||0) + kgPed(p, prod); });
+  // comparativo anual
+  const anoAtual = +hoje().slice(0,4), anoIni = +primeiraData().slice(0,4), mesAtual = +hoje().slice(5,7);
+  const anos = []; for (let a = anoIni; a <= anoAtual; a++) anos.push(a);
+  const porMes = {}; batsProd('0000-01-01', hoje(), prod).forEach(b => { const k = b.data.slice(0,7); porMes[k] = (porMes[k]||0) + kgBatida(b); });
+  const cores = ['var(--muted)','var(--info)','var(--warn)','var(--accent)'];
+  const serAnos = anos.map((a,i) => ({nome:String(a), cor: cores[cores.length - anos.length + i] || cores[0], vals: MESES.map((_,m) => (a===anoAtual && m+1>mesAtual) ? null : (porMes[`${a}-${String(m+1).padStart(2,'0')}`]||0))}));
+  const acum = a => MESES.slice(0, mesAtual).reduce((s,_,m) => s + (porMes[`${a}-${String(m+1).padStart(2,'0')}`]||0), 0);
+  const totAno = a => MESES.reduce((s,_,m) => s + (porMes[`${a}-${String(m+1).padStart(2,'0')}`]||0), 0);
+  // por produto
+  const porProd = produtos().map(p => { const a = A.bs.filter(b=>b.produtoId===p.id), b = B.bs.filter(x=>x.produtoId===p.id); const kg = a.reduce((s,x)=>s+kgBatida(x),0);
+    return {p, kg, n:a.length, kgB: b.reduce((s,x)=>s+kgBatida(x),0), aprov: a.length ? kg/(a.length*CAPACIDADE) : null}; }).filter(x => x.kg || x.kgB).sort((a,b)=>b.kg-a.kg);
+  // matéria-prima
+  const cons = (ini,fim) => { const o = {}; movs().forEach(m => { if (m.tipo==='saida' && m.data>=ini && m.data<=fim) o[m.mpId] = (o[m.mpId]||0) - m.qtd; }); return o; };
+  const cA = cons(F.ini,F.fim), cB = cons(F.pIni,F.pFim);
+  // compras por item
+  const compItem = Object.values(S.materias).map(m => { const cs = A.cs.filter(c => c.mpId===m.id), rec = cs.filter(c => c.status==='recebida' && c.encerradoEm);
+    return {m, n:cs.length, qtd: cs.filter(c=>!['recusada','cancelada'].includes(c.status)).reduce((s,c)=>s+c.qtd,0),
+      resp: media(cs.filter(c=>c.respondidoEm).map(c => (new Date(c.respondidoEm)-new Date(c.solicitadoEm))/3600000)),
+      prazoReal: media(rec.map(c => diasEntre(c.solicitadoEm.slice(0,10), c.encerradoEm.slice(0,10)))),
+      noPrazo: rec.filter(c=>c.previsao).length ? rec.filter(c => c.previsao && c.encerradoEm.slice(0,10) <= c.previsao).length / rec.filter(c=>c.previsao).length : null}; }).filter(x => x.n);
+  const pct = v => v==null ? '—' : nf(v*100)+'%';
+  const opt = (v,t,cur) => `<option value="${v}" ${v===cur?'selected':''}>${t}</option>`;
+  return `
+  <div class="page-head"><div><h1>Análise</h1><p>Produção, pedidos, consumo e compras ao longo do tempo. Cada número é comparado com o período anterior de mesmo tamanho.</p></div>
+    <div class="actions">
+      <select id="anPer" aria-label="Período">${opt('30d','Últimos 30 dias',AN.per)}${opt('90d','Últimos 90 dias',AN.per)}${opt('ano','Este ano',AN.per)}${opt('12m','Últimos 12 meses',AN.per)}${opt('tudo','Todo o histórico',AN.per)}</select>
+      <select id="anGrp" aria-label="Agrupar por">${opt('','Agrupar: automático',AN.grp)}${opt('dia','Por dia',AN.grp)}${opt('semana','Por semana',AN.grp)}${opt('mes','Por mês',AN.grp)}${opt('ano','Por ano',AN.grp)}</select>
+      <select id="anProd" aria-label="Produto">${opt('','Todos os produtos',AN.prod)}${produtos().map(p => opt(p.id, curto(p.nome), AN.prod)).join('')}</select>
+    </div></div>
+  <div class="small muted" style="margin:-8px 0 14px">${fd(F.ini)} a ${fd(F.fim)} · comparado com ${fd(F.pIni)} a ${fd(F.pFim)}</div>
+  <div class="grid g-kpi" style="margin-bottom:16px">
+    <div class="panel kpi"><div class="eyebrow">Produzido</div><div class="v">${nfK(A.kg)} <small>${A.kg>=10000?'':'kg'}</small></div><div class="s">${delta(A.kg,B.kg)}</div></div>
+    <div class="panel kpi"><div class="eyebrow">Batidas</div><div class="v">${nf(A.n)}</div><div class="s">${delta(A.n,B.n)}</div></div>
+    <div class="panel kpi"><div class="eyebrow">Aproveitamento da batida</div><div class="v">${pct(A.aprov)}</div><div class="s">média de ${A.n?nf(A.kg/A.n):'—'} kg por batida de ${CAPACIDADE}</div></div>
+    <div class="panel kpi"><div class="eyebrow">Pedidos recebidos</div><div class="v">${nf(A.nP)}</div><div class="s">${nfK(A.kgP)}${A.kgP>=10000?'':' kg'} · ${delta(A.nP,B.nP)}</div></div>
+    <div class="panel kpi"><div class="eyebrow">Pedido até produção</div><div class="v">${A.tAt==null?'—':nf(A.tAt)} <small>dias</small></div><div class="s">${delta(A.tAt,B.tAt,true)}</div></div>
+    <div class="panel kpi"><div class="eyebrow">Compras no prazo</div><div class="v">${pct(A.prazo)}</div><div class="s">${A.nC} solicitações · resposta em ${A.resp==null?'—':nf(A.resp)} h</div></div>
+  </div>
+  <section class="panel" style="margin-bottom:16px"><div class="panel-h"><h2>Produção × pedidos recebidos</h2><span class="muted small">kg por ${{dia:'dia',semana:'semana',mes:'mês',ano:'ano'}[F.g]}</span></div>
+    <div class="panel-b">${grafico(labels, [{nome:'Produzido', cor:'var(--accent)', vals:keys.map(k=>sp[k]||0)}, {nome:'Pedidos recebidos', cor:'var(--info)', vals:keys.map(k=>sd[k]||0)}], 'bar')}</div></section>
+  <div class="grid g-2w" style="align-items:start;margin-bottom:16px">
+    <section class="panel"><div class="panel-h"><h2>Comparativo entre anos</h2><span class="muted small">kg produzidos por mês</span></div>
+      <div class="panel-b">${grafico(MESES, serAnos, 'line', 220)}</div>
+      <div class="tbl-wrap"><table><thead><tr><th>Ano</th><th class="r">Total</th><th class="r">Jan–${MESES[mesAtual-1]}</th><th class="r">Variação</th></tr></thead><tbody>
+      ${anos.slice().reverse().map(a => { const ac = acum(a), ant = acum(a-1); return `<tr><td class="mono"><b>${a}</b>${a===anoAtual?' <span class="muted small">(até hoje)</span>':''}</td><td class="r mono">${nf(totAno(a))} kg</td><td class="r mono">${nf(ac)} kg</td><td class="r">${anos.includes(a-1)&&ant?delta(ac,ant).replace(' <span class="muted">vs período anterior</span>',''):'—'}</td></tr>`; }).join('')}
+      </tbody></table></div></section>
+    <section class="panel"><div class="panel-h"><h2>Por produto</h2><span class="muted small">no período</span></div><div class="tbl-wrap"><table>
+      <thead><tr><th>Produto</th><th class="r">Produzido</th><th class="r">% do total</th><th class="r">Batidas</th><th class="r">Variação</th></tr></thead><tbody>
+      ${porProd.length ? porProd.map(x => `<tr><td>${esc(curto(x.p.nome))}</td><td class="r mono">${nf(x.kg)} kg</td><td class="r mono">${A.kg?nf(x.kg/A.kg*100):0}%</td><td class="r mono">${x.n}</td><td class="r small">${x.kgB?delta(x.kg,x.kgB).replace(' <span class="muted">vs período anterior</span>',''):'novo'}</td></tr>`).join('') : '<tr><td colspan="5" class="empty">Sem produção no período.</td></tr>'}
+      </tbody></table></div></section>
+  </div>
+  <div class="grid g-2w" style="align-items:start">
+    <section class="panel"><div class="panel-h"><h2>Consumo de matéria-prima</h2><span class="muted small">no período</span></div><div class="tbl-wrap"><table>
+      <thead><tr><th>Item</th><th class="r">Consumido</th><th class="r">Média/dia</th><th class="r">Variação</th><th class="r">Estoque dura</th></tr></thead><tbody>
+      ${Object.values(S.materias).filter(m => cA[m.id] || cB[m.id]).sort((a,b)=>(cB[b.id]||0)-(cB[a.id]||0)).sort((a,b)=>(cA[b.id]||0)-(cA[a.id]||0)).map(m => { const s = situacaoMP(m); return `<tr class="click" data-act="mpDet" data-id="${m.id}"><td>${esc(m.nome)}</td><td class="r mono">${nf(Math.round(cA[m.id]||0))} ${esc(mpUn(m))}</td><td class="r mono">${nf((cA[m.id]||0)/F.dias)}</td><td class="r small">${cB[m.id]?delta(cA[m.id]||0,cB[m.id]).replace(' <span class="muted">vs período anterior</span>',''):'—'}</td><td class="r">${s.dur===Infinity?'—':Math.max(0,Math.floor(s.dur))+' dias'}</td></tr>`; }).join('') || '<tr><td colspan="5" class="empty">Sem consumo no período.</td></tr>'}
+      </tbody></table></div></section>
+    <section class="panel"><div class="panel-h"><h2>Desempenho das compras</h2><span class="muted small">solicitadas no período</span></div><div class="tbl-wrap"><table>
+      <thead><tr><th>Item</th><th class="r">Compras</th><th class="r">Quantidade</th><th class="r">Resposta</th><th class="r">Entrega real</th><th class="r">No prazo</th></tr></thead><tbody>
+      ${compItem.length ? compItem.map(x => `<tr><td>${esc(x.m.nome)}<div class="small muted">prazo cadastrado ${x.m.prazoEntrega||7} dias</div></td><td class="r mono">${x.n}</td><td class="r mono">${nf(x.qtd)} ${esc(mpUn(x.m))}</td><td class="r mono">${x.resp==null?'—':nf(x.resp)+' h'}</td><td class="r mono" ${x.prazoReal!=null && x.prazoReal > (x.m.prazoEntrega||7)+1 ? 'style="color:var(--crit)"':''}>${x.prazoReal==null?'—':nf(x.prazoReal)+' dias'}</td><td class="r">${x.noPrazo==null?'—':`<span class="pill ${x.noPrazo>=0.9?'ok':x.noPrazo>=0.7?'warn':'crit'}">${pct(x.noPrazo)}</span>`}</td></tr>`).join('') : '<tr><td colspan="6" class="empty">Nenhuma compra solicitada no período.</td></tr>'}
+      </tbody></table></div>
+      <div class="panel-b small muted" style="border-top:1px solid var(--line)">"Entrega real" é o tempo da solicitação até o recebimento. Se ficar acima do prazo cadastrado, vale atualizar o prazo no cadastro do item, porque é ele que calcula quando comprar.</div></section>
+  </div>`;
+}
+
+/* ---------- modal genérico ---------- */
+function openModal(html, size=''){
+  closeModal();
+  const o = document.createElement('div'); o.className='overlay'; o.id='overlay';
+  o.innerHTML = `<div class="modal ${size}" id="modal" role="dialog" aria-modal="true">${html}</div>`;
+  o.addEventListener('mousedown', e => { if (e.target===o) closeModal(); });
+  document.body.appendChild(o);
+  const f = $('#modal input:not([disabled]),#modal select:not([disabled])'); if (f) f.focus();
+}
+function closeModal(){ $('#overlay')?.remove(); }
+document.addEventListener('keydown', e => { if (e.key==='Escape') closeModal(); });
+
+/* ---------- ações ---------- */
+const ACT = {
+  close: closeModal,
+  novoPedido: () => modalPedidoForm(null),
+  editarPedido: d => modalPedidoForm(d.id),
+  salvarPedido: d => salvarPedido(d.id||null),
+  pedido: d => modalPedido(d.id),
+  pedFiltro: d => { PED_FILTRO = d.k; render(); },
+  addItem: () => $('#itRows').insertAdjacentHTML('beforeend', window._itemRow({produtoId:'', qtd:0})),
+  rmItem: (d, el) => el.closest('tr').remove(),
+  excluirPedido: async d => { const el = $('[data-act="excluirPedido"]'); if (el.dataset.ok){ await Store.del('pedidos', d.id); closeModal(); toast('Pedido excluído'); } else { el.dataset.ok='1'; el.textContent='Confirmar exclusão'; } },
+  copiarCom: () => { const t = $('#txtCom'); const done = () => toast('Texto copiado'); try { navigator.clipboard.writeText(t.value).then(done, () => { t.select(); toast('Selecionado. Use Ctrl+C'); }); } catch(e){ t.select(); } },
+  expedir: async d => { const p = clone(S.pedidos[d.id]); p.expedido = true; p.expedidoEm = hoje(); await Store.put('pedidos', p); modalPedido(d.id); toast('Pedido marcado como expedido'); },
+  desexpedir: async d => { const p = clone(S.pedidos[d.id]); p.expedido = false; delete p.expedidoEm; await Store.put('pedidos', p); modalPedido(d.id); },
+  atender: d => modalAtender(d.id, +d.i),
+  alocar: d => alocar(d.b, d.p, +d.i),
+  novaBatida: d => modalNovaBatida(d.p),
+  novaBatidaDia: d => modalNovaBatida('', d.d),
+  nbAuto: () => { let rest = +$('#nbKg').value||0; $$('#nbBody tr[data-pid]').forEach(tr => { const q = Math.min(+tr.dataset.pend, Math.max(0,rest)); rest -= q; $('.nb-chk',tr).checked = q>0; $('.nb-q',tr).value = q||''; }); window._nb.upd(); },
+  salvarBatida,
+  batida: d => modalBatida(d.id),
+  salvarBatidaEd: async d => { const b = clone(S.batidas[d.id]); const kg = +$('#bdKg').value, data = $('#bdData').value;
+    if (kg>CAPACIDADE || kg<alocadoBatida(b) || kg<=0) return $('#bdErr').textContent = `A quantidade deve ficar entre ${nf(Math.max(1,alocadoBatida(b)))} e ${CAPACIDADE} kg.`;
+    const mud = []; if (kg!==b.kg) mud.push(`quantidade ${nf(b.kg)} → ${nf(kg)} kg`); if (data!==b.data) mud.push(`data ${fd(b.data)} → ${fd(data)}`);
+    if (!mud.length) return; b.kg = kg; b.data = data; b.historico.push({em:agora(), por:quem(), txt:'Alterada: '+mud.join(', ')}); await Store.put('batidas', b); modalBatida(b.id); toast('Batida atualizada'); },
+  rmAloc: async d => { const b = clone(S.batidas[d.id]); const [a] = b.alocacoes.splice(+d.k,1); b.historico.push({em:agora(), por:quem(), txt:`Pedido ${S.pedidos[a.pedidoId]?.numero} retirado (${nf(a.qtd)} kg)`}); await Store.put('batidas', b); modalBatida(b.id); },
+  gerarLote: async d => { try { const n = await Store.gerarLote(d.id); modalBatida(d.id); toast(`Lote ${n} gerado`); } catch(e){ $('#bdErr').textContent = e.message; } },
+  registrarProd: async d => { const b = clone(S.batidas[d.id]); const r = +$('#bdReal').value;
+    if (!r || r<alocadoBatida(b) || r>CAPACIDADE) return $('#bdErr').textContent = `Informe entre ${nf(alocadoBatida(b))} e ${CAPACIDADE} kg. Não pode ser menos que o já vinculado aos pedidos.`;
+    const cons = calcBaixa(b, r);
+    b.status='produzida'; b.kgReal=r; b.produzidoEm=agora(); b.consumo = cons;
+    b.historico.push({em:agora(), por:quem(), txt:`Produção confirmada: ${nf(r)} kg${cons.length?' · matéria-prima baixada do estoque':''}`});
+    const mv = cons.map(c => ({id:uid(), mpId:c.mpId, tipo:'saida', qtd:-c.qtd, data:hoje(), origem:'producao', batidaId:b.id, lote:b.lote, loteFornecedor:c.loteFornecedor, por:quem(), em:agora()}));
+    await Store.putMany([['batidas', b], ...mv.map(m => ['movimentos', m])]);
+    if ($('#bdSimple')) closeModal(); else modalBatida(b.id);
+    const neg = [...new Set(cons.map(c=>c.mpId))].filter(id => saldoMP(id) < 0).map(id => S.materias[id].nome);
+    toast(neg.length ? `Lote ${b.lote} produzido. Atenção: saldo negativo em ${neg.join(', ')}. Confira as entradas.` : `Lote ${b.lote} produzido`); },
+  cancelarLote: async d => { const motivo = $('#bdMotivo').value.trim(); if (!motivo) return $('#bdErr').textContent = 'Informe o motivo do cancelamento.';
+    const b = clone(S.batidas[d.id]); b.alocacoesCanceladas = b.alocacoes; b.alocacoes = []; b.status='cancelada'; b.motivoCancel = motivo; b.historico.push({em:agora(), por:quem(), txt:`Lote cancelado: ${motivo}`}); await Store.put('batidas', b); modalBatida(b.id); toast(`Lote ${b.lote} cancelado`); },
+  excluirBatida: async (d, el) => { if (el.dataset.ok){ await Store.del('batidas', d.id); closeModal(); toast('Batida excluída'); } else { el.dataset.ok='1'; el.textContent='Confirmar exclusão'; } },
+  calNav: d => { const n = +d.d; if (!n){ const t = new Date(); CAL = {y:t.getFullYear(), m:t.getMonth()}; } else { const t = new Date(CAL.y, CAL.m+n, 1); CAL = {y:t.getFullYear(), m:t.getMonth()}; } render(); },
+  saldoInicial: modalSaldoInicial, salvarSaldo,
+  cadTab: d => { CAD_TAB = d.k; render(); },
+  produto: d => modalProduto(d.id||null),
+  addFm: () => $('#fmRows').insertAdjacentHTML('beforeend', window._fmRow({})),
+  salvarProduto: d => salvarProduto(d.id||null),
+  materia: d => modalMateria(d.id||null),
+  salvarMateria: async d => { const nome = $('#mpNome').value.trim(); if (!nome) return $('#mpErr').textContent = 'Informe o nome.';
+    const base = d.id ? S.materias[d.id] : {id:uid()}; await Store.put('materias', {...base, nome, unidade:$('#mpUn').value, controlaLote:$('#mpLote').value==='1', fornecedor:$('#mpForn').value.trim(), prazoEntrega:+$('#mpPrazo').value||7, multiploCompra:+$('#mpMult').value||0, diasSeguranca:+$('#mpSeg').value||0, diasCobertura:+$('#mpCob').value||30, estoqueMinimo:+$('#mpMin').value||0, exemplo:false}); closeModal(); toast('Matéria-prima salva'); },
+  excluirMateria: async (d, el) => { if (movs().some(x=>x.mpId===d.id)) return $('#mpErr').textContent = 'Este item já tem movimentação de estoque e não pode ser excluído.'; if (produtos().some(p=>p.formula?.some(f=>f.mpId===d.id))) return $('#mpErr').textContent = 'Esta matéria-prima está em uma fórmula. Retire-a da fórmula antes.'; if (el.dataset.ok){ await Store.del('materias', d.id); closeModal(); } else { el.dataset.ok='1'; el.textContent='Confirmar exclusão'; } },
+  salvarCfgLote: async () => { const n = +$('#cfgLote').value; const max = Math.max(0, ...Object.values(S.batidas).filter(b=>b.lote && b.origem!=='saldo').map(b=>b.lote));
+    if (!n || n<=max) return $('#cfgErr').textContent = `O próximo lote precisa ser maior que ${max}, o último já gerado.`; await Store.setConfig({proximoLote:n}); toast(`Sequência ajustada: próximo lote ${n}`); },
+  resetDemo: (d, el) => { if (el.dataset.ok){ S = seedDemo(); saveLocal(); closeModal(); render(); toast('Dados de exemplo restaurados'); } else { el.dataset.ok='1'; el.textContent='Confirmar: apagar e restaurar'; } },
+  sair: () => auth.signOut(),
+  importar: () => modalImportar(false),
+  ir: d => { location.hash = d.k; },
+  hojeLote: async (d, el) => { if (!el.dataset.ok){ el.dataset.ok='1'; el.textContent = `Confirmar lote ${S.config.proximoLote}`; el.insertAdjacentHTML('afterend','<span class="small muted" style="max-width:180px">O número não poderá ser mudado depois.</span>'); return; }
+    try { const n = await Store.gerarLote(d.id); toast(`Lote ${n} gerado. Anote no pedido.`); } catch(e){ toast(e.message); } },
+  hojeFeito: d => modalTerminei(d.id),
+  solicitar: d => modalSolicitar(d.id),
+  enviarSC: d => enviarSC(d.id),
+  solicitarVarios: modalSolicitarVarios,
+  enviarVarios: async () => { const rows = $$('#modal tr[data-mp]').filter(tr => $('.sv-chk',tr).checked && +$('.sv-q',tr).value>0); if (!rows.length) return toast('Marque ao menos um item.');
+    let n = 0, em = 0; for (const tr of rows){ const r = await novaSC(tr.dataset.mp, +$('.sv-q',tr).value, tr.dataset.ate, tr.dataset.crit==='1', ''); n++; if (r.ok) em++; }
+    closeModal(); toast(`${n} solicitação(ões) enviada(s) ao diretor${em?' com e-mail':''}`); },
+  cmpFiltro: d => { CMP_FILTRO = d.k; render(); },
+  compra: d => modalCompra(d.id),
+  responderSC: d => responderSC(d.id),
+  cancelarSC: async (d, el) => { if (!el.dataset.ok){ el.dataset.ok='1'; el.textContent='Confirmar cancelamento'; return; } const c = clone(S.compras[d.id]); c.status='cancelada'; c.encerradoEm=agora(); c.historico.push({em:agora(), por:quem(), txt:'Solicitação cancelada pela produção'}); await Store.put('compras', c); modalCompra(c.id); toast(`${scNum(c)} cancelada`); },
+  receberSC: d => modalEntrada(S.compras[d.id].mpId, d.id),
+  irAguardando: () => { CMP_FILTRO = 'aguardando'; if (location.hash==='#compras') render(); else location.hash = 'compras'; },
+  salvarEmails: async () => { await Store.setConfig({emailDiretor:$('#cfgMailDir').value.trim(), emailProducao:$('#cfgMailProd').value.trim()}); toast('E-mails salvos'); },
+  revisarImp: d => { const r = window._imp[+d.k]; modalPedidoForm(null, {...r, itens: r.itens.length ? r.itens.map(i=>({produtoId:i.produtoId, qtd:i.qtd})) : [{produtoId:'', qtd:0}]}, +d.k); },
+  lancarImp: d => lancarImp(+d.k),
+  lancarTodosImp: async () => { const ks = window._imp.map((r,k)=>k).filter(k => statusImp(window._imp[k])[0]==='Pronto para lançar'); await Store.putMany(ks.map(k => ['pedidos', pedidoDeImp(window._imp[k])])); ks.forEach(k => window._imp[k].lancado = true); modalImportar(true); toast(`${ks.length} pedidos lançados`); },
+  estFiltro: d => { EST_FILTRO = d.k; render(); },
+  mpDet: d => modalMPDet(d.id),
+  entradaMP: d => modalEntrada(d.id||''), salvarEntrada,
+  ajusteMP: d => modalAjusteMP(d.id||''), salvarAjusteMP,
+  listaCompras: modalListaCompras,
+  ajusteAcab: async d => { const q = +$('#ajQtd').value, mot = $('#ajMot').value.trim(), b = clone(S.batidas[d.id]);
+    if (!(q>0)) return $('#bdErr').textContent = 'Informe a quantidade do ajuste.'; if (!mot) return $('#bdErr').textContent = 'Informe o motivo do ajuste.';
+    const v = q * +$('#ajTipo').value; if (saldoBatida(b) + v < 0) return $('#bdErr').textContent = `O lote só tem ${nf(saldoBatida(b))} kg de saldo.`;
+    b.ajustes = (b.ajustes||[]).concat([{qtd:v, motivo:mot, em:agora(), por:quem()}]); b.historico.push({em:agora(), por:quem(), txt:`Ajuste de ${v>0?'+':'−'}${nf(Math.abs(v))} kg: ${mot}`});
+    await Store.put('batidas', b); modalBatida(b.id); toast('Ajuste registrado'); },
+  seedProdutos: async () => { const d = seedBase(); for (const p of Object.values(d.produtos)) await Store.put('produtos', p); toast('Produtos cadastrados'); }
+};
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-act]'); if (!t) return;
+  if (t.tagName==='A' || t.tagName==='BUTTON') e.preventDefault();
+  const fn = ACT[t.dataset.act]; if (fn) fn(t.dataset, t, e);
+});
+document.addEventListener('input', e => { if (e.target.id==='pedBusca'){ PED_BUSCA = e.target.value; const pos = e.target.selectionStart; render(); const el = $('#pedBusca'); if (el){ el.focus(); try { el.setSelectionRange(pos,pos); } catch(_){} } } });
+document.addEventListener('change', e => { if (['anPer','anGrp','anProd'].includes(e.target.id)){ AN[{anPer:'per',anGrp:'grp',anProd:'prod'}[e.target.id]] = e.target.value; render(); return; }
+  if (e.target.id==='detSel'){ SIMPLES = !e.target.checked; try { localStorage.setItem('qpcp-detalhes', SIMPLES?'0':'1'); } catch(_){} render(); return; }
+  if (e.target.id==='perfilSel'){ VIEW = {diretor:'painel', adm:'pedidos'}[e.target.value] || 'inicio'; try { history.replaceState(null,'','#'+VIEW); } catch(_){} PERFIL = e.target.value; render(); lembrarDiretor(true); } });
+window.addEventListener('hashchange', () => { VIEW = location.hash.slice(1); if (!VIEWS.includes(VIEW)) VIEW=viewPadrao(); closeModal(); render(); });
+
+/* ---------- dados iniciais ---------- */
+function seedBase(){
+  const lista = [
+    ['1','BIOFLY - 1KG',true],['2','BIOLEITE - 1KG',false],['3','BIOGORDO - 1KG',true],['8','QUIMIVET OVINOS & CAPRINOS - 1KG',true],
+    ['4','KAVAJU BIOCONTROLE - 1 KG',false],['5','KAVAJU COMPETIÇÃO - 1 KG',false],['6','KAVAJU MANUTENÇÃO - 1 KG',false],
+    ['7','BIOTAURUS',false],['9','QUIMIVET HORSE - 1KG',false],['10','KAVAJU POTROS - 1 KG',false]];
+  const produtos = {};
+  lista.forEach(([c,n,ok],i) => { const id = 'p'+c; produtos[id] = {id, codigo:c, nome:n, unPorCaixa:10, formula:[], codigoConfirmado:ok, ordem:i}; });
+  return {produtos, materias:{}, pedidos:{}, batidas:{}, movimentos:{}, compras:{}, config:{proximoLote:1}};
+}
+function seedDemo(){
+  const D = seedBase(), h = hoje();
+  const mps = [['Fosfato bicálcico','kg',true,10,1000],['Calcário calcítico','kg',false,7,1000],['Cloreto de sódio','kg',false,5,25],['Premix vitamínico','kg',true,15,25],['Levedura','kg',true,12,25],['Saco 1 kg','un',false,20,1000],['Caixa 10 un','un',false,10,100]];
+  mps.forEach(([n,u,l,pz,mu],i) => D.materias['m'+i] = {id:'m'+i, nome:n, unidade:u, controlaLote:l, prazoEntrega:pz, multiploCompra:mu, diasSeguranca:5, diasCobertura:30, estoqueMinimo:0, fornecedor:'Fornecedor exemplo '+(i%3+1), exemplo:true});
+  Object.keys(D.produtos).forEach((pid,i) => { const f = 160+5*(i%5); D.produtos[pid].formula = [{mpId:'m0',kgPor500:f},{mpId:'m1',kgPor500:150},{mpId:'m2',kgPor500:500-f-150-30-20},{mpId:'m3',kgPor500:30},{mpId:'m4',kgPor500:20},{mpId:'m5',kgPor500:500},{mpId:'m6',kgPor500:50}]; });
+  const H = (t) => [{em:new Date().toISOString(), por:'Produção', txt:t}];
+  const ped = (numero, emissao, cliente, cidade, uf, vendedor, itens, extra={}) => D.pedidos[numero] = {id:numero, numero, emissao, cliente, cidade, uf, vendedor, obs:'', dataPrevista:'', itens:itens.map(([c,q])=>({produtoId:'p'+c, qtd:q})), ...extra};
+  const bat = (lote, data, cod, kg, status, alocs, extra={}) => { const id = 'b'+(lote||uid()); D.batidas[id] = {id, produtoId:'p'+cod, data, kg, kgReal: status==='produzida'?kg:undefined, status, lote, alocacoes:alocs.map(([p,i,q])=>({pedidoId:p, item:i, qtd:q})), historico:H(lote?`Lote ${lote}`:'Batida planejada'), ...extra}; if (D.batidas[id].kgReal===undefined) delete D.batidas[id].kgReal; return id; };
+  const uteis = []; for (let k=1; uteis.length<14; k++){ const d = addDias(h,-k), w = new Date(d+'T12:00:00').getDay(); if (w && w<6) uteis.unshift(d); }
+  // histórico longo de exemplo (desde jan/2025) para a tela de Análise
+  let sd = 20251; const rnd = () => { sd = (sd*16807) % 2147483647; return (sd-1)/2147483646; };
+  const pesos = [['3',26],['1',20],['2',14],['5',8],['6',7],['4',6],['9',6],['8',5],['10',4],['7',4]], somaP = pesos.reduce((s,x)=>s+x[1],0);
+  const sorteia = () => { let r = rnd()*somaP; for (const [c,w] of pesos){ if ((r -= w) < 0) return c; } return '3'; };
+  const clientes = [['Fazenda Boa Esperança (exemplo)','Rio Verde','GO'],['Agropecuária Santa Rita (exemplo)','Uberaba','MG'],['Haras Primavera (exemplo)','Barretos','SP'],['Cooperativa Alto Vale (exemplo)','Chapecó','SC'],['Fazenda São Jorge (exemplo)','Araçatuba','SP'],['Agro Norte (exemplo)','Araguaína','TO'],['Fazenda Água Limpa (exemplo)','Dourados','MS'],['Casa do Criador (exemplo)','Londrina','PR'],['Fazenda Ouro Verde (exemplo)','Imperatriz','MA'],['Rural Center (exemplo)','Cuiabá','MT'],['Fazenda Santa Clara (exemplo)','Votuporanga','SP'],['Pecuária Serra Azul (exemplo)','Montes Claros','MG']];
+  const histDias = []; for (let d = '2025-01-02'; d < uteis[0]; d = addDias(d,1)){ const w = new Date(d+'T12:00:00').getDay(); if (w && w<6) histDias.push(d); }
+  const histB = [];
+  histDias.forEach(d => { const saz = [0.75,0.75,0.85,1.0,1.15,1.25,1.3,1.3,1.2,1.0,0.9,0.8][+d.slice(5,7)-1] * (d >= '2026' ? 1.15 : 1);
+    const nb = rnd() < 0.12 ? 0 : (rnd() < 0.4*saz ? 2 : 1) + (rnd() < 0.08*saz ? 1 : 0);
+    for (let j=0; j<nb; j++) histB.push({d, c:sorteia(), kg: rnd() < 0.8 ? 500 : 300 + 50*Math.floor(rnd()*4)}); });
+  let lh = 1488 - histB.length;
+  histB.forEach((x,i) => { const n = String(10011000+i), cl = clientes[Math.floor(rnd()*clientes.length)]; let c = x.c, kg = x.kg, qtd = x.kg;
+    if (lh === 1404){ c = '8'; kg = 500; qtd = 424; }
+    ped(n, addDias(x.d, -(1+Math.floor(rnd()*6))), cl[0], cl[1], cl[2], ['LENA','HENRIQUE','BEATRIZ'][i%3], [[c,qtd]], {expedido:true, expedidoEm:addDias(x.d, 1+Math.floor(rnd()*3)), exemplo:true});
+    const id = bat(lh, x.d, c, kg, 'produzida', [[n,0,qtd]], {hist:true}); D.batidas[id].historico = []; lh++; });
+  // histórico recente: lotes 1488–1499 já expedidos
+  const rot = ['3','1','2','5','6','9','3','1','4','3','10','2'];
+  let lote = 1488;
+  uteis.slice(0,6).forEach((d,k) => { [0,1].forEach(j => { const c = rot[(k*2+j)%rot.length], kg = j? 400:500, n = String(10013500+(lote-1480));
+    ped(n, addDias(d,-3), 'Cliente Exemplo', 'Exemplo', 'SP', 'Exemplo', [[c,kg]], {expedido:true, expedidoEm:addDias(d,2), exemplo:true}); bat(lote, d, c, kg, 'produzida', [[n,0,kg]]); lote++; }); });
+  // pedidos reais das fotos
+  ped('10013735','2026-10-30','ADEMIR BERNARDINO DE FRANÇA','Maracaí','SP','LENA',[['3',100]]);
+  ped('10013745','2026-10-30','VINICIUS LACHMAN','Pato Branco','PR','BEATRIZ',[['3',100]], {obs:'Contato: Fazenda Center'});
+  ped('10013711','2026-10-29','ADILSON DE ALMEIDA E COELHO','Fortaleza dos Nogueiras','MA','HENRIQUE',[['1',160],['3',160],['8',40]], {obs:'Mandou comprovante da fazenda'});
+  ped('10013722','2026-10-31','Agropecuária Exemplo Ltda','Exemplo','GO','Exemplo',[['3',300]], {exemplo:true, expedido:true});
+  D.batidas.b1404.alocacoes.push({pedidoId:'10013711', item:2, qtd:40});
+  bat(1500, uteis[6], '3', 500, 'produzida', [['10013735',0,100],['10013745',0,100],['10013722',0,300]]);
+  bat(1501, uteis[6], '1', 500, 'produzida', [['10013711',0,160]]);
+  bat(1502, uteis[7], '2', 500, 'produzida', []);
+  bat(1503, uteis[8], '3', 500, 'produzida', [['10013711',1,160]]);
+  lote = 1504;
+  uteis.slice(9).forEach((d,k) => { const c = ['6','4','9','1','5'][k%5], n = String(10013500+(lote-1480)); ped(n, addDias(d,-4), 'Cliente Exemplo', 'Exemplo', 'MG', 'Exemplo', [[c,500]], {expedido:true, exemplo:true}); bat(lote, d, c, 500, 'produzida', [[n,0,500]]); lote++; });
+  // pedidos pendentes (exemplo)
+  ped('10013760', addDias(h,-3), 'Fazenda Santa Luzia (exemplo)', 'Votuporanga', 'SP', 'LENA', [['3',200],['2',100]], {exemplo:true});
+  ped('10013762', addDias(h,-3), 'Haras Boa Vista (exemplo)', 'Barretos', 'SP', 'HENRIQUE', [['5',300],['9',120]], {exemplo:true, dataPrevista:addDias(h,1)});
+  ped('10013765', addDias(h,-2), 'Agro Center Norte (exemplo)', 'Araguaína', 'TO', 'BEATRIZ', [['1',400]], {exemplo:true});
+  ped('10013768', addDias(h,-1), 'Cooperativa Vale Verde (exemplo)', 'Rio Verde', 'GO', 'LENA', [['3',350],['10',80]], {exemplo:true});
+  ped('10013770', addDias(h,-1), 'Fazenda Três Irmãos (exemplo)', 'Uberaba', 'MG', 'HENRIQUE', [['7',500]], {exemplo:true});
+  bat(lote, h, '5', 500, 'produzida', [['10013762',0,300]]); lote++;
+  bat(lote, addDias(h,1), '9', 300, 'liberada', [['10013762',1,120]]); lote++;
+  bat(null, addDias(h,1), '3', 500, 'planejada', [['10013760',0,200],['10013768',0,300]]);
+  bat(null, addDias(h,2), '1', 400, 'planejada', [['10013765',0,400]]);
+  // movimentação de estoque de exemplo: baixas de cada produção e duas compras por item
+  const corte = addDias(h,-18), consumo = {}, antes = {};
+  const MV = o => { const id = 'mv'+uid(); D.movimentos[id] = {id, por:'Produção', em:new Date(o.data+'T10:00:00').toISOString(), ...o}; };
+  Object.values(D.materias).forEach((m,i) => { m._l1 = m.controlaLote ? 'F'+(2300+i*7) : ''; m._l2 = m.controlaLote ? 'F'+(2400+i*7) : ''; });
+  // histórico: baixa de matéria-prima e uma compra recebida por item por mês
+  const consMes = {}; let nm = 0, nsc = 0;
+  const tsH = (d, hh) => new Date(d+'T'+hh+':00').toISOString();
+  Object.values(D.batidas).filter(b => b.hist).forEach(b => { b.consumo = [];
+    D.produtos[b.produtoId].formula.forEach(f => { const q = f.kgPor500*b.kg/500, mk = b.data.slice(0,7), m = D.materias[f.mpId];
+      const lf = m.controlaLote ? 'H'+mk.replace('-','').slice(2)+'-'+f.mpId.slice(1) : '';
+      (consMes[f.mpId] ||= {})[mk] = (consMes[f.mpId][mk]||0) + q; b.consumo.push({mpId:f.mpId, qtd:q, loteFornecedor:lf});
+      D.movimentos['mh'+(++nm)] = {id:'mh'+nm, mpId:f.mpId, tipo:'saida', qtd:-q, data:b.data, origem:'producao', batidaId:b.id, lote:b.lote, loteFornecedor:lf}; }); });
+  Object.entries(consMes).forEach(([mpId, meses]) => { const m = D.materias[mpId];
+    Object.entries(meses).sort().forEach(([mk, q]) => {
+      const receb = addDias(mk+'-01', -(2+Math.floor(rnd()*6))), atraso = rnd() < 0.78 ? -Math.floor(rnd()*3) : 1+Math.floor(rnd()*5);
+      const prev = addDias(receb, -atraso), solic = addDias(prev, -m.prazoEntrega), lf = m.controlaLote ? 'H'+mk.replace('-','').slice(2)+'-'+mpId.slice(1) : '';
+      const id = 'sch'+(++nsc), sEm = tsH(solic,'08:30');
+      D.compras[id] = {id, numero:nsc, mpId, qtd:Math.round(q*1000)/1000, qtdSugerida:Math.round(q), precisaAte:prev, urgente:false, status:'recebida', solicitadoEm:sEm, solicitadoPor:'Produção', saldoNoPedido:0, duraDias:null,
+        fornecedor:m.fornecedor, previsao:prev, qtdRecebida:q, respondidoEm:new Date(new Date(sEm).getTime() + (2+Math.floor(rnd()*44))*3600000).toISOString(), encerradoEm:tsH(receb,'10:00'), lembretes:0, obs:'', respostaObs:'', historico:[], hist:true};
+      D.movimentos['mhe'+nsc] = {id:'mhe'+nsc, mpId, tipo:'entrada', qtd:q, data:receb, origem:'compra', nf:'NF '+(20000+nsc), fornecedor:m.fornecedor, loteFornecedor:lf, validade: lf ? addDias(receb, 365) : '', compraId:id};
+    }); });
+  Object.values(D.compras).filter(c => c.hist).sort((a,b) => a.solicitadoEm.localeCompare(b.solicitadoEm)).forEach((c,i) => c.numero = i+1);
+  Object.values(D.batidas).filter(b => b.status==='produzida' && b.origem!=='saldo' && !b.hist).sort((a,b)=>a.data.localeCompare(b.data)).forEach(b => {
+    const kg = b.kgReal ?? b.kg; b.consumo = [];
+    D.produtos[b.produtoId].formula.forEach(f => { const q = f.kgPor500*kg/500, m = D.materias[f.mpId], lf = b.data < corte ? m._l1 : m._l2;
+      consumo[f.mpId] = (consumo[f.mpId]||0) + q; if (b.data < corte) antes[f.mpId] = (antes[f.mpId]||0) + q;
+      b.consumo.push({mpId:f.mpId, qtd:q, loteFornecedor:lf}); MV({mpId:f.mpId, tipo:'saida', qtd:-q, data:b.data, origem:'producao', batidaId:b.id, lote:b.lote, loteFornecedor:lf}); }); });
+  const fim = {m0:24, m1:45, m2:38, m3:3, m4:15, m5:35, m6:8};
+  Object.values(D.materias).forEach((m,i) => { const c30 = Object.values(D.movimentos).filter(x => x.mpId===m.id && x.tipo==='saida' && x.data>=addDias(h,-30)).reduce((s,x)=>s-x.qtd,0);
+    const e1 = Math.ceil((antes[m.id]||0)*1.04), e2 = Math.max(0, Math.round((consumo[m.id]||0) - (antes[m.id]||0) + c30/30*fim[m.id]));
+    MV({mpId:m.id, tipo:'entrada', qtd:e1, data:addDias(h,-40), origem:'compra', nf:'NF '+(31200+i*3), fornecedor:m.fornecedor, loteFornecedor:m._l1, validade: m.controlaLote ? addDias(h, 150+i*20) : ''});
+    MV({mpId:m.id, tipo:'entrada', qtd:e2, data:corte, origem:'compra', nf:'NF '+(31800+i*3), fornecedor:m.fornecedor, loteFornecedor:m._l2, validade: m.controlaLote ? addDias(h, m.id==='m4' ? 26 : 300) : ''});
+    delete m._l1; delete m._l2; });
+  const ts = (d, hh) => new Date(d+'T'+hh+':00').toISOString();
+  const SC = o => D.compras[o.id] = {qtdRecebida:0, lembretes:0, obs:'', respostaObs:'', ...o};
+  const mvF = Object.values(D.movimentos).find(x => x.mpId==='m0' && x.tipo==='entrada' && x.data===corte);
+  SC({id:'sc1', numero:nsc+1, mpId:'m0', qtd:mvF.qtd, qtdSugerida:mvF.qtd, precisaAte:corte, urgente:false, status:'recebida', solicitadoEm:ts(addDias(corte,-12),'09:10'), solicitadoPor:'Produção', saldoNoPedido:900, duraDias:9,
+    fornecedor:D.materias.m0.fornecedor, previsao:corte, qtdRecebida:mvF.qtd, respondidoEm:ts(addDias(corte,-11),'14:02'), encerradoEm:ts(corte,'10:00'),
+    historico:[{em:ts(addDias(corte,-12),'09:10'), por:'Produção', txt:`Solicitada: ${nf(mvF.qtd)} kg`},{em:ts(addDias(corte,-11),'14:02'), por:'Diretor', txt:`Comprado · previsão de entrega ${fd(corte)}`},{em:ts(corte,'10:00'), por:'Produção', txt:`Recebido ${nf(mvF.qtd)} kg (${mvF.nf}) · solicitação concluída`}]});
+  mvF.compraId = 'sc1';
+  SC({id:'sc2', numero:nsc+2, mpId:'m6', qtd:1400, qtdSugerida:1400, precisaAte:addDias(h,4), urgente:false, status:'comprada', solicitadoEm:ts(addDias(h,-3),'08:40'), solicitadoPor:'Produção', saldoNoPedido:420, duraDias:8,
+    fornecedor:'Fornecedor exemplo 1', previsao:addDias(h,3), respondidoEm:ts(addDias(h,-2),'11:20'), respostaObs:'Pedido feito. Entrega combinada.',
+    historico:[{em:ts(addDias(h,-3),'08:40'), por:'Produção', txt:'Solicitada: 1.400 un'},{em:ts(addDias(h,-2),'11:20'), por:'Diretor', txt:`Comprado · previsão de entrega ${fd(addDias(h,3))} · "Pedido feito. Entrega combinada."`}]});
+  const t26 = new Date(Date.now()-26*3600000).toISOString();
+  SC({id:'sc3', numero:nsc+3, mpId:'m3', qtd:1000, qtdSugerida:1000, precisaAte:addDias(h,3), urgente:true, status:'solicitada', solicitadoEm:t26, solicitadoPor:'Produção', saldoNoPedido:62, duraDias:3,
+    obs:'O premix acaba antes das próximas batidas de Biogordo.', historico:[{em:t26, por:'Produção', txt:'Solicitada: 1.000 kg (urgente)'}]});
+  D.config.proximaSC = nsc+4;
+  D.config.proximoLote = lote;
+  return D;
+}
+
+/* ---------- inicialização ---------- */
+function loadScript(src){ return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('Falha ao carregar '+src)); document.head.appendChild(s); }); }
+function telaLogin(msg){
+  $('#root').innerHTML = `<div class="login"><form class="panel" id="fLogin"><div class="panel-h"><div><b style="font-family:var(--f-display);font-size:1.2rem">Quimivet PCP</b><div class="small muted">Entre com seu e-mail da empresa</div></div></div>
+    <div class="panel-b grid" style="gap:12px"><label class="f">E-mail<input id="lgEmail" type="email" required autocomplete="username"></label><label class="f">Senha<input id="lgSenha" type="password" required autocomplete="current-password"></label>
+    <div class="err" id="lgErr">${esc(msg||'')}</div><button class="btn pri" type="submit">Entrar</button></div></form></div>`;
+  $('#fLogin').addEventListener('submit', async e => { e.preventDefault(); try { await auth.signInWithEmailAndPassword($('#lgEmail').value, $('#lgSenha').value); } catch(err){ $('#lgErr').textContent = 'E-mail ou senha incorretos.'; } });
+}
+async function initFirebase(){
+  $('#root').innerHTML = '<div class="empty">Conectando…</div>';
+  const base = `https://www.gstatic.com/firebasejs/${FB_VER}/`;
+  await loadScript(base+'firebase-app-compat.js');
+  await Promise.all([loadScript(base+'firebase-auth-compat.js'), loadScript(base+'firebase-firestore-compat.js')]);
+  firebase.initializeApp(FIREBASE_CONFIG);
+  auth = firebase.auth(); fs = firebase.firestore();
+  let unsubs = [];
+  auth.onAuthStateChanged(async u => {
+    unsubs.forEach(f => f()); unsubs = []; READY = false;
+    if (!u){ USER = null; return telaLogin(); }
+    USER = u;
+    const perf = await fs.collection('usuarios').doc(u.uid).get();
+    if (!perf.exists) return telaLogin(`Seu usuário (${u.email}) ainda não tem perfil. Peça ao administrador para cadastrar o UID ${u.uid} na coleção "usuarios".`);
+    PERFIL = ['producao','diretor','adm'].includes(perf.data().perfil) ? perf.data().perfil : 'adm';
+    S = {produtos:{}, materias:{}, pedidos:{}, batidas:{}, movimentos:{}, compras:{}, config:{proximoLote:1}};
+    let pend = 7;
+    const done = () => { if (--pend===0){ READY = true; render(); if (!Object.keys(S.produtos).length && canEdit()) ofertarSeed(); } };
+    ['produtos','materias','pedidos','batidas','movimentos','compras'].forEach(col => { let first = true;
+      unsubs.push(fs.collection(col).onSnapshot(snap => { S[col] = {}; snap.forEach(d => S[col][d.id] = d.data()); if (first){ first=false; done(); } else render(); }, e => toast('Erro ao ler '+col+': '+e.message))); });
+    let fc = true;
+    unsubs.push(fs.collection('config').doc('geral').onSnapshot(d => { S.config = {proximoLote:1, ...(d.data()||{})}; if (fc){ fc=false; done(); } else render(); }));
+  });
+}
+function ofertarSeed(){
+  openModal(`<div class="modal-h"><h2>Banco de dados vazio</h2></div><div class="modal-b"><p>Quer cadastrar agora os 10 produtos da Quimivet? Depois você confere os códigos e completa as fórmulas em Cadastros.</p></div>
+  <div class="modal-f"><button class="btn" data-act="close">Agora não</button><button class="btn pri" data-act="seedProdutos" onclick="setTimeout(closeModal,50)">Cadastrar os 10 produtos</button></div>`);
+}
+(function start(){
+  VIEW = location.hash.slice(1); if (!VIEWS.includes(VIEW)) VIEW=viewPadrao();
+  if (MODE==='fb'){ initFirebase().catch(e => { $('#root').innerHTML = `<div class="empty">Não foi possível conectar ao Firebase: ${esc(e.message)}</div>`; }); return; }
+  S = loadLocal() || seedDemo(); S.movimentos ||= {}; S.compras ||= {}; saveLocal(); READY = true; render();
+})();
+</script>
+
+</body>
+</html>
